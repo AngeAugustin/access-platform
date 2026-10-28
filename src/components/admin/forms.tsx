@@ -4,6 +4,7 @@ import { useState } from "react";
 import { EDUCATOR_LEVELS } from "@/lib/constants";
 import {
   adminStopTutoringAction,
+  checkPayoutAction,
   createAdminAction,
   fedapayPayoutAction,
   handleComplaintAction,
@@ -151,7 +152,7 @@ export function PayoutForms({ payoutId, fedapay }: { payoutId: string; fedapay: 
   return (
     <div className="space-y-2">
       {fedapay && !manual && (
-        <ActionForm action={fedapayPayoutAction} confirmMessage="Envoyer ce reversement sur le Mobile Money de l'éducateur ?">
+        <ActionForm toast action={fedapayPayoutAction} confirmMessage="Envoyer ce reversement sur le Mobile Money de l'éducateur ?">
           <FormMessage />
           <input type="hidden" name="payoutId" value={payoutId} />
           <SubmitButton size="sm" pendingLabel="Envoi…">
@@ -160,7 +161,7 @@ export function PayoutForms({ payoutId, fedapay }: { payoutId: string; fedapay: 
         </ActionForm>
       )}
       {manual ? (
-        <ActionForm action={manualPayoutAction} className="flex flex-wrap items-end gap-2">
+        <ActionForm toast action={manualPayoutAction} className="flex flex-wrap items-end gap-2">
           <FormMessage />
           <input type="hidden" name="payoutId" value={payoutId} />
           <TextField label="Référence du virement" name="providerReference" required className="min-w-40" />
@@ -178,9 +179,21 @@ export function PayoutForms({ payoutId, fedapay }: { payoutId: string; fedapay: 
   );
 }
 
+export function CheckPayoutForm({ payoutId }: { payoutId: string }) {
+  return (
+    <ActionForm toast action={checkPayoutAction} className="space-y-2">
+      <input type="hidden" name="payoutId" value={payoutId} />
+      <SubmitButton variant="secondary" size="sm" pendingLabel="Vérification…">
+        Vérifier chez FedaPay
+      </SubmitButton>
+      <FormMessage />
+    </ActionForm>
+  );
+}
+
 export function AdminStopTutoringForm({ tutoringId }: { tutoringId: string }) {
   return (
-    <ActionForm action={adminStopTutoringAction} className="space-y-3" confirmMessage="Arrêter définitivement ce tutorat ?">
+    <ActionForm toast action={adminStopTutoringAction} className="space-y-3" confirmMessage="Arrêter définitivement ce tutorat ?">
       <FormMessage />
       <input type="hidden" name="tutoringId" value={tutoringId} />
       <TextArea label="Motif" name="reason" rows={2} required />
@@ -191,7 +204,7 @@ export function AdminStopTutoringForm({ tutoringId }: { tutoringId: string }) {
 
 export function DisputeForm({ lessonId }: { lessonId: string }) {
   return (
-    <ActionForm action={resolveDisputeAction} className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+    <ActionForm toast action={resolveDisputeAction} className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
       <FormMessage />
       <input type="hidden" name="lessonId" value={lessonId} />
       <SubmitButton name="decision" value="CONFIRMED" variant="secondary" size="sm">

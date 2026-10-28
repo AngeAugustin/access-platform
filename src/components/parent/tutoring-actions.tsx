@@ -8,7 +8,7 @@ import { Button } from "@/components/ui";
 export function LessonReview({ lessonId }: { lessonId: string }) {
   const [dispute, setDispute] = useState(false);
   return (
-    <ActionForm action={reviewLessonAction} className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+    <ActionForm toast action={reviewLessonAction} className="mt-4 space-y-3 border-t border-slate-100 pt-4">
       <FormMessage />
       <input type="hidden" name="lessonId" value={lessonId} />
       <Hide>
@@ -55,7 +55,7 @@ export function StopTutoringForm({ tutoringId }: { tutoringId: string }) {
     );
   }
   return (
-    <ActionForm action={stopTutoringAction} className="w-full max-w-md space-y-3 rounded-2xl border border-rose-200 bg-white p-4 shadow-soft" confirmMessage="Confirmer l'arrêt définitif de ce tutorat ?">
+    <ActionForm toast action={stopTutoringAction} className="w-full max-w-md space-y-3 rounded-2xl border border-rose-200 bg-white p-4 shadow-soft" confirmMessage="Confirmer l'arrêt définitif de ce tutorat ?">
       <FormMessage />
       <input type="hidden" name="tutoringId" value={tutoringId} />
       <Hide>
@@ -74,7 +74,7 @@ export function StopTutoringForm({ tutoringId }: { tutoringId: string }) {
 
 export function EducatorReviewForm({ tutoringId }: { tutoringId: string }) {
   return (
-    <ActionForm action={reviewEducatorAction} className="space-y-4">
+    <ActionForm toast action={reviewEducatorAction} className="space-y-4">
       <FormMessage />
       <input type="hidden" name="tutoringId" value={tutoringId} />
       <Hide>

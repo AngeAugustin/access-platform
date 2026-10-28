@@ -23,7 +23,7 @@ import {
 } from "@/lib/validation";
 import { notify } from "@/server/services/notify";
 import { BusinessError, stopTutoring } from "@/server/services/tutoring";
-import { executeFedapayPayout, recordManualPayout } from "@/server/services/payments";
+import { executeFedapayPayout, recordManualPayout, syncPayout } from "@/server/services/payments";
 import { fedapayConfigured } from "@/server/services/fedapay";
 import { saveSettings } from "@/server/services/settings";
 
@@ -163,7 +163,29 @@ export async function fedapayPayoutAction(_: ActionState, formData: FormData): P
     throw err;
   }
   revalidatePath("/admin/paiements");
-  return { ok: true, message: "Reversement envoyé via FedaPay." };
+  return { ok: true, message: "Reversement lancé : il sera marqué « Reversé » dès la confirmation de FedaPay." };
+}
+
+export async function checkPayoutAction(_: ActionState, formData: FormData): Promise<ActionState> {
+  await requireRole("ADMIN");
+  const payoutId = String(formData.get("payoutId") ?? "");
+  const payout = await db.payout.findUnique({ where: { id: payoutId } });
+  if (!payout?.providerReference || payout.method !== "FEDAPAY") return { ok: false, message: "Reversement introuvable." };
+  let result;
+  try {
+    result = await syncPayout(payout.providerReference);
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : "FedaPay injoignable." };
+  }
+  revalidatePath("/admin/paiements");
+  const messages = {
+    done: "Confirmé : les fonds ont été envoyés.",
+    failed: "FedaPay signale un échec : vous pouvez relancer le reversement.",
+    processing: "Toujours en cours chez FedaPay.",
+    unknown: "Reversement inconnu de FedaPay.",
+    already: "Statut déjà à jour.",
+  } as const;
+  return { ok: result !== "failed" && result !== "unknown", message: messages[result] };
 }
 
 export async function manualPayoutAction(_: ActionState, formData: FormData): Promise<ActionState> {

@@ -102,6 +102,14 @@ export async function createAndStartPayout(params: {
   return { id: payout.id, status: "started" };
 }
 
+export type FedapayPayout = { id: number; status: string; last_error_code?: string | null };
+
+// Comme pour les transactions, l'état d'un reversement est toujours relu auprès de FedaPay.
+export async function getPayout(id: number | string): Promise<FedapayPayout> {
+  const res = await call<{ "v1/payout": FedapayPayout }>("GET", `/payouts/${encodeURIComponent(String(id))}`);
+  return res["v1/payout"];
+}
+
 // Vérifie l'en-tête X-FEDAPAY-SIGNATURE : "t=<horodatage>,s=<signature>",
 // signature = HMAC-SHA256(secret, "<horodatage>.<corps brut>"). Tolérance de 5 minutes.
 export function verifyWebhookSignature(payload: string, header: string | null, secret: string, toleranceSeconds = 300): boolean {

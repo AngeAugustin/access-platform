@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { formatDate, formatFcfa, fullName } from "@/lib/format";
 import { completeEndedTutorings } from "./tutoring";
 import { notify } from "./notify";
-import { syncTransaction } from "./payments";
+import { syncPayout, syncTransaction } from "./payments";
+import { notifyAdmins } from "./notify";
 import { fedapayConfigured } from "./fedapay";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -53,11 +54,39 @@ export async function runDailyJobs(now = new Date()) {
     }
   }
 
+  // Reversements lancés mais non confirmés : rapprochement, puis alerte au-delà de 24 heures.
+  let payoutsConfirmed = 0;
+  let payoutsStuck = 0;
+  if (fedapayConfigured()) {
+    const processing = await db.payout.findMany({
+      where: { status: "PROCESSING", method: "FEDAPAY", providerReference: { not: null }, startedAt: { lte: new Date(now.getTime() - 5 * 60 * 1000) } },
+      select: { providerReference: true, startedAt: true },
+    });
+    for (const p of processing) {
+      try {
+        const result = await syncPayout(p.providerReference!);
+        if (result === "done" || result === "failed") payoutsConfirmed++;
+        else if (result === "processing" && p.startedAt && now.getTime() - p.startedAt.getTime() > DAY_MS) payoutsStuck++;
+      } catch (err) {
+        console.error("[cron] reversement", p.providerReference, err);
+      }
+    }
+    if (payoutsStuck > 0) {
+      await notifyAdmins({
+        type: "payout.stuck",
+        title: "Reversements non confirmés",
+        body: `${payoutsStuck} reversement(s) FedaPay sont en cours depuis plus de 24 heures. Vérifiez-les dans le tableau de bord FedaPay.`,
+        link: "/admin/paiements",
+        email: true,
+      });
+    }
+  }
+
   const purged = await db.$transaction([
     db.session.deleteMany({ where: { expiresAt: { lt: now } } }),
     db.passwordResetToken.deleteMany({ where: { OR: [{ expiresAt: { lt: now } }, { usedAt: { not: null } }] } }),
     db.rateLimit.deleteMany({ where: { resetAt: { lt: now } } }),
   ]);
 
-  return { completed, reminders, synced, purgedSessions: purged[0].count };
+  return { completed, reminders, synced, payoutsConfirmed, payoutsStuck, purgedSessions: purged[0].count };
 }

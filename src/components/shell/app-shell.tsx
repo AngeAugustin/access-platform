@@ -7,6 +7,7 @@ import { ROLE_LABELS } from "@/lib/constants";
 import { Logo } from "@/components/brand";
 import { Avatar } from "@/components/avatar";
 import { InstallHint } from "@/components/pwa/install-hint";
+import { Toaster } from "@/components/ui/toaster";
 import { BottomNav, type NavItem, SideNav } from "./nav-links";
 import { LogoutButton } from "./logout-button";
 
@@ -70,6 +71,7 @@ export async function AppShell({ user, items, root, children }: { user: CurrentU
         {children}
       </main>
       <BottomNav items={items} root={root} />
+      <Toaster />
     </div>
   );
 }

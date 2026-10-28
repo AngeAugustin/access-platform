@@ -1,10 +1,11 @@
 "use client";
 
-import { createContext, startTransition, use, useActionState, useEffect, useRef } from "react";
+import { createContext, use, useEffect, useRef, useState, useTransition } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import { CircleAlert, CircleCheck, LoaderCircle } from "lucide-react";
 import type { ActionState } from "@/lib/validation";
 import { Button, type ButtonSize, type ButtonVariant, cx } from "./index";
+import { showToast } from "./toaster";
 
 type FormContextValue = { state: ActionState; pending: boolean };
 const FormContext = createContext<FormContextValue>({ state: {}, pending: false });
@@ -23,18 +24,33 @@ export function ActionForm({
   className,
   resetOnSuccess = false,
   confirmMessage,
+  toast = false,
 }: {
   action: ServerAction;
   children: ReactNode;
   className?: string;
   resetOnSuccess?: boolean;
   confirmMessage?: string;
+  // Affiche aussi le résultat en message éphémère : utile quand le formulaire disparaît après l'action.
+  toast?: boolean;
 }) {
-  const [state, formAction, pending] = useActionState(action, {});
+  const [state, setState] = useState<ActionState>({});
+  const [pending, startTransition] = useTransition();
+  const stateRef = useRef(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state.ok && resetOnSuccess) ref.current?.reset();
   }, [state, resetOnSuccess]);
+
+  // L'action est appelée directement (et non via useActionState) : son résultat est connu dès la réponse
+  // du serveur, même si le formulaire disparaît dans la page mise à jour qui arrive avec elle.
+  const submit = (formData: FormData) =>
+    startTransition(async () => {
+      const result = await action(stateRef.current, formData);
+      stateRef.current = result;
+      if (toast && result.message && !result.powRequired) showToast(result.message, result.ok !== false);
+      startTransition(() => setState(result));
+    });
 
   return (
     <FormContext value={{ state, pending }}>
@@ -49,8 +65,7 @@ export function ActionForm({
           if (pending) return;
           if (confirmMessage && !window.confirm(confirmMessage)) return;
           const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLElement | null;
-          const formData = new FormData(e.currentTarget, submitter);
-          startTransition(() => formAction(formData));
+          submit(new FormData(e.currentTarget, submitter));
         }}
       >
         {children}

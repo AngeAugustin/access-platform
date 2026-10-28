@@ -6,7 +6,7 @@ import { formatDate, formatDateTime, formatFcfa, fullName } from "@/lib/format";
 import { fedapayConfigured } from "@/server/services/fedapay";
 import { Card, EmptyState, PageHeader, Stat, Table, Td } from "@/components/ui";
 import { PayoutBadge } from "@/components/status";
-import { PayoutForms } from "@/components/admin/forms";
+import { CheckPayoutForm, PayoutForms } from "@/components/admin/forms";
 
 export const metadata = { title: "Paiements" };
 
@@ -71,7 +71,16 @@ export default async function AdminPaymentsPage() {
                   <PayoutBadge status={p.status} />
                   {p.failureReason && <span className="block text-xs text-rose-700">{p.failureReason}</span>}
                 </Td>
-                <Td>{p.status !== "PROCESSING" && <PayoutForms payoutId={p.id} fedapay={fedapay} />}</Td>
+                <Td>
+                  {p.status === "PROCESSING" ? (
+                    <div className="space-y-1">
+                      <p className="text-xs text-slate-500">Lancé le {formatDateTime(p.startedAt)}</p>
+                      {p.providerReference && <CheckPayoutForm payoutId={p.id} />}
+                    </div>
+                  ) : (
+                    <PayoutForms payoutId={p.id} fedapay={fedapay} />
+                  )}
+                </Td>
               </tr>
             ))}
           </Table>

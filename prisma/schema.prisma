@@ -446,6 +446,8 @@ model Payout {
   method            PayoutMethod?
   providerReference String?
   failureReason     String?
+  // Lancement chez FedaPay ; executedAt n'est renseigné qu'une fois le versement confirmé.
+  startedAt         DateTime?
   executedById      String?
   executedBy        User?           @relation("PayoutExecutor", fields: [executedById], references: [id], onDelete: SetNull)
   executedAt        DateTime?
@@ -454,6 +456,7 @@ model Payout {
 
   @@index([status])
   @@index([educatorId])
+  @@index([providerReference])
 }
 
 // Événements webhook déjà traités : garantit l'idempotence.

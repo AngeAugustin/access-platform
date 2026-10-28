@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
 import { verifyWebhookSignature } from "@/server/services/fedapay";
-import { syncTransaction } from "@/server/services/payments";
+import { syncPayout, syncTransaction } from "@/server/services/payments";
 
 // Webhook FedaPay : signature vérifiée, événement traité une seule fois,
-// et l'état de la transaction relu auprès de l'API FedaPay avant toute écriture.
+// et l'état de la transaction ou du reversement relu auprès de l'API FedaPay avant toute écriture.
 export async function POST(request: Request) {
   const secret = process.env.FEDAPAY_WEBHOOK_SECRET ?? "";
   // Refus avant lecture du corps : un corps volumineux ne doit pas occuper la mémoire du serveur.
@@ -22,17 +22,18 @@ export async function POST(request: Request) {
     return new Response("JSON invalide", { status: 400 });
   }
   const name = String(event.name ?? "");
-  const transactionId = event.entity?.id;
-  if (!name.startsWith("transaction.") || transactionId === undefined) {
+  const entityId = event.entity?.id;
+  const kind = name.startsWith("transaction.") ? "transaction" : name.startsWith("payout.") ? "payout" : null;
+  if (!kind || entityId === undefined || !/^\d{1,20}$/.test(String(entityId))) {
     return Response.json({ received: true, ignored: true });
   }
 
-  const eventId = String(event.id ?? `${name}:${transactionId}`);
+  const eventId = String(event.id ?? `${name}:${entityId}`);
   const already = await db.webhookEvent.findUnique({ where: { id: eventId } });
   if (already) return Response.json({ received: true, duplicate: true });
 
   try {
-    const result = await syncTransaction(String(transactionId));
+    const result = kind === "transaction" ? await syncTransaction(String(entityId)) : await syncPayout(String(entityId));
     // Enregistré seulement après un traitement réussi : FedaPay renverra l'événement en cas d'échec.
     await db.webhookEvent.create({ data: { id: eventId, provider: "fedapay", name } }).catch(() => {});
     return Response.json({ received: true, result });

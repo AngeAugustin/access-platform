@@ -4,7 +4,8 @@ import { splitCommission } from "@/lib/billing";
 import { formatFcfa, fullName } from "@/lib/format";
 import { audit } from "@/lib/audit";
 import { BusinessError } from "./tutoring";
-import { createAndStartPayout, createTransaction, getTransaction } from "./fedapay";
+import { createAndStartPayout, createTransaction, getPayout, getTransaction } from "./fedapay";
+import { payoutOutcome } from "@/lib/payout-status";
 import { getSettings } from "./settings";
 import { notify, notifyAdmins } from "./notify";
 
@@ -130,6 +131,8 @@ export async function syncTransaction(transactionId: string): Promise<SyncResult
 }
 
 // Reversement automatique via FedaPay vers le numéro Mobile Money de l'éducateur.
+// Le reversement reste « en cours » jusqu'à ce que FedaPay confirme l'envoi (webhook, vérification
+// manuelle ou rapprochement quotidien) : un lancement accepté ne garantit pas que les fonds sont arrivés.
 export async function executeFedapayPayout(payoutId: string, adminId: string) {
   const payout = await db.payout.findUnique({
     where: { id: payoutId },
@@ -140,22 +143,33 @@ export async function executeFedapayPayout(payoutId: string, adminId: string) {
   const phone = payout.educator.payoutPhone;
   if (!phone) throw new BusinessError("L'éducateur n'a pas renseigné de numéro Mobile Money.");
 
+  // Avant de relancer un reversement en échec, on s'assure que la tentative précédente n'a pas
+  // finalement abouti : sinon l'éducateur serait payé deux fois.
+  if (payout.status === "FAILED" && payout.method === "FEDAPAY" && payout.providerReference) {
+    const previous = await getPayout(payout.providerReference).catch(() => {
+      throw new BusinessError("Impossible de vérifier la tentative précédente auprès de FedaPay. Réessayez plus tard.");
+    });
+    if (payoutOutcome(previous.status) !== "FAILED") {
+      await db.payout.update({ where: { id: payoutId }, data: { status: "PROCESSING", failureReason: null } });
+      await syncPayout(payout.providerReference);
+      throw new BusinessError("La tentative précédente est finalement en cours ou aboutie chez FedaPay : pas de nouvel envoi.");
+    }
+  }
+
   const locked = await db.payout.updateMany({
     where: { id: payoutId, status: { in: ["PENDING", "FAILED"] } },
-    data: { status: "PROCESSING", method: "FEDAPAY", executedById: adminId, failureReason: null },
+    data: { status: "PROCESSING", method: "FEDAPAY", executedById: adminId, failureReason: null, providerReference: null, startedAt: new Date() },
   });
   if (locked.count === 0) throw new BusinessError("Ce reversement est déjà en cours.");
 
+  let providerId: number;
   try {
     const { user } = payout.educator;
     const result = await createAndStartPayout({
       amount: payout.netAmount,
       customer: { firstname: user.firstName, lastname: user.lastName, email: user.email, phone },
     });
-    await db.payout.update({
-      where: { id: payoutId },
-      data: { status: "DONE", providerReference: String(result.id), executedAt: new Date() },
-    });
+    providerId = result.id;
   } catch (err) {
     await db.payout.update({
       where: { id: payoutId },
@@ -163,15 +177,65 @@ export async function executeFedapayPayout(payoutId: string, adminId: string) {
     });
     throw new BusinessError(err instanceof Error ? err.message : "Échec du reversement.");
   }
-  await audit(adminId, "payout.fedapay", "Payout", payoutId);
+  await db.payout.update({ where: { id: payoutId }, data: { providerReference: String(providerId) } });
+  await audit(adminId, "payout.fedapay_started", "Payout", payoutId, { providerId });
   await notify({
     userId: payout.educator.userId,
-    type: "payout.done",
-    title: "Reversement effectué",
-    body: `${formatFcfa(payout.netAmount)} ont été envoyés sur votre numéro Mobile Money.`,
+    type: "payout.started",
+    title: "Reversement en cours",
+    body: `${formatFcfa(payout.netAmount)} sont en cours d'envoi sur votre numéro Mobile Money.`,
     link: `/educateur/paiements`,
+  });
+  // FedaPay peut confirmer immédiatement : on vérifie une première fois sans attendre le webhook.
+  await syncPayout(String(providerId)).catch((err) => console.error("[payout] vérification immédiate", err));
+}
+
+export type PayoutSyncResult = "done" | "failed" | "processing" | "unknown" | "already";
+
+// Rapproche un reversement FedaPay avec la base. Idempotent : webhook, bouton « Vérifier » et tâche
+// quotidienne peuvent l'appeler sans risque, seule la première transition est appliquée et notifiée.
+export async function syncPayout(providerId: string): Promise<PayoutSyncResult> {
+  const payout = await db.payout.findFirst({
+    where: { providerReference: providerId, method: "FEDAPAY" },
+    include: { educator: true, installment: { include: { tutoring: { include: { child: true } } } } },
+  });
+  if (!payout) return "unknown";
+  if (payout.status !== "PROCESSING") return "already";
+
+  const remote = await getPayout(providerId);
+  const outcome = payoutOutcome(remote.status);
+  if (outcome === "PROCESSING") return "processing";
+
+  const updated = await db.payout.updateMany({
+    where: { id: payout.id, status: "PROCESSING", providerReference: providerId },
+    data:
+      outcome === "DONE"
+        ? { status: "DONE", executedAt: new Date() }
+        : { status: "FAILED", failureReason: `FedaPay : ${remote.status}${remote.last_error_code ? ` (${remote.last_error_code})` : ""}`.slice(0, 300) },
+  });
+  if (updated.count === 0) return "already";
+
+  if (outcome === "DONE") {
+    await audit(null, "payout.confirmed", "Payout", payout.id, { providerId });
+    await notify({
+      userId: payout.educator.userId,
+      type: "payout.done",
+      title: "Reversement effectué",
+      body: `${formatFcfa(payout.netAmount)} ont été envoyés sur votre numéro Mobile Money.`,
+      link: `/educateur/paiements`,
+      email: true,
+    });
+    return "done";
+  }
+  await audit(null, "payout.failed", "Payout", payout.id, { providerId, status: remote.status });
+  await notifyAdmins({
+    type: "payout.failed",
+    title: "Reversement en échec",
+    body: `Le reversement de ${formatFcfa(payout.netAmount)} pour ${fullName(payout.installment.tutoring.child)} a échoué chez FedaPay (${remote.status}). Vérifiez le numéro Mobile Money puis relancez-le.`,
+    link: `/admin/paiements`,
     email: true,
   });
+  return "failed";
 }
 
 // Reversement fait hors plateforme (virement, espèces) : l'administrateur saisit la référence.

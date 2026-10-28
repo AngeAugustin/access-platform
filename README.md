@@ -64,8 +64,9 @@ public/sw.js              Service worker (cache, hors connexion, notifications p
 2. FedaPay notifie `POST /api/webhooks/fedapay` (signature HMAC vérifiée, événement traité une seule fois) et renvoie le parent sur `/parent/paiements/retour`.
 3. Dans les deux cas, l'état de la transaction est **relu auprès de l'API FedaPay** et le montant est comparé à l'échéance avant toute écriture. La tâche quotidienne rattrape les webhooks perdus.
 4. L'administrateur reverse l'éducateur via FedaPay (Mobile Money) ou enregistre un virement manuel.
+5. Un reversement FedaPay reste **« En cours »** jusqu'à ce que FedaPay confirme l'envoi des fonds (statut `sent`). La confirmation arrive par le webhook (`payout.*`), par le bouton « Vérifier chez FedaPay » ou par le rapprochement de la tâche quotidienne. En cas d'échec, les administrateurs sont alertés et peuvent relancer ; avant toute relance, l'état de la tentative précédente est revérifié pour éviter un double versement. Un reversement non confirmé après 24 heures déclenche une alerte.
 
-Dans le tableau de bord FedaPay, déclarez le webhook `https://<votre-domaine>/api/webhooks/fedapay` et copiez son secret dans `FEDAPAY_WEBHOOK_SECRET`.
+Dans le tableau de bord FedaPay, déclarez le webhook `https://<votre-domaine>/api/webhooks/fedapay` pour les événements de **transactions et de reversements**, et copiez son secret dans `FEDAPAY_WEBHOOK_SECRET`.
 
 > Le client FedaPay suit la documentation et le SDK officiels, mais il a été testé contre un serveur FedaPay simulé : faites un paiement et un reversement réels en **sandbox** avant de passer `FEDAPAY_ENV=live`.
 
