@@ -38,8 +38,6 @@ model User {
   status         AccountStatus @default(ACTIVE)
   address        String?
   city           String?
-  failedLogins   Int           @default(0)
-  lockedUntil    DateTime?
   lastLoginAt    DateTime?
   acceptedTermsAt DateTime?
   createdAt      DateTime      @default(now())

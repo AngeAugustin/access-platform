@@ -4,6 +4,7 @@ import Link from "next/link";
 import { GraduationCap, Users } from "lucide-react";
 import { registerAction } from "@/server/actions/auth";
 import { ActionForm, FieldError, FormMessage, SubmitButton, TextField } from "@/components/ui/form";
+import { PowGuard } from "@/components/security/pow-guard";
 
 const roles = [
   { value: "PARENT", title: "Parent", text: "Je cherche un éducateur", icon: Users },
@@ -14,6 +15,7 @@ export function RegisterForm({ defaultRole }: { defaultRole: "PARENT" | "EDUCATO
   return (
     <ActionForm action={registerAction} className="space-y-5">
       <FormMessage />
+      <PowGuard purpose="register" />
       <fieldset>
         <legend className="label">Je m&apos;inscris en tant que</legend>
         <div className="grid grid-cols-2 gap-3">

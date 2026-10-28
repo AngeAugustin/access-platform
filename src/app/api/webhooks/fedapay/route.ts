@@ -6,6 +6,9 @@ import { syncTransaction } from "@/server/services/payments";
 // et l'état de la transaction relu auprès de l'API FedaPay avant toute écriture.
 export async function POST(request: Request) {
   const secret = process.env.FEDAPAY_WEBHOOK_SECRET ?? "";
+  // Refus avant lecture du corps : un corps volumineux ne doit pas occuper la mémoire du serveur.
+  const declared = Number(request.headers.get("content-length") ?? "0");
+  if (!Number.isFinite(declared) || declared > 100_000) return new Response("Trop volumineux", { status: 413 });
   const payload = await request.text();
   if (payload.length > 100_000) return new Response("Trop volumineux", { status: 413 });
   if (!verifyWebhookSignature(payload, request.headers.get("x-fedapay-signature"), secret)) {

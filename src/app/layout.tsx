@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import "@fontsource-variable/inter";
 import { ServiceWorkerRegistrar } from "@/components/pwa/service-worker";
 import "./globals.css";
@@ -17,7 +18,10 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+// Toutes les pages sont rendues à la demande : la Content-Security-Policy repose sur un nonce par requête,
+// qu'une page générée à l'avance ne peut pas porter (ses scripts seraient bloqués).
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  await connection();
   return (
     <html lang="fr">
       <body className="min-h-dvh">

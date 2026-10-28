@@ -165,8 +165,9 @@ export async function reviewEducatorAction(_: ActionState, formData: FormData): 
   return { ok: true, message: "Merci pour votre avis." };
 }
 
-export async function payInstallmentAction(installmentId: string): Promise<{ url?: string; error?: string }> {
+export async function payInstallmentAction(installmentId: unknown): Promise<{ url?: string; error?: string }> {
   const parent = await requireRole("PARENT");
+  if (typeof installmentId !== "string" || installmentId.length > 40) return { error: "Échéance introuvable." };
   if (!(await rateLimit(`pay:${parent.id}`, 10, 600))) {
     return { error: "Trop de tentatives de paiement. Réessayez dans quelques minutes." };
   }

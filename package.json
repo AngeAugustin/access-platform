@@ -12,7 +12,9 @@
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
-    "migrate:legacy": "tsx --conditions=react-server scripts/migrate-legacy.ts"
+    "migrate:legacy": "tsx --conditions=react-server scripts/migrate-legacy.ts",
+    "security:check": "node scripts/security-check.mjs",
+    "audit:deps": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
@@ -26,11 +28,11 @@
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
     "web-push": "^3.6.7",
-    "zod": "^4.3.6"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.20.5",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -43,9 +45,9 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
-    "vitest": "^3.2.7"
+    "vitest": "^5.0.5"
   },
   "engines": {
-    "node": ">=20.9"
+    "node": ">=22"
   }
 }

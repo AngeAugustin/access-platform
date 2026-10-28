@@ -29,7 +29,9 @@ export async function savePushSubscription(input: unknown): Promise<{ ok: boolea
   return { ok: true };
 }
 
-export async function deletePushSubscription(endpoint: string): Promise<void> {
+export async function deletePushSubscription(endpoint: unknown): Promise<void> {
   const user = await requireUser();
-  await db.pushSubscription.deleteMany({ where: { endpoint, userId: user.id } });
+  const parsed = z.string().max(1000).safeParse(endpoint);
+  if (!parsed.success) return;
+  await db.pushSubscription.deleteMany({ where: { endpoint: parsed.data, userId: user.id } });
 }

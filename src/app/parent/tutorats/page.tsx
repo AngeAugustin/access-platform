@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { formatDate, fullName } from "@/lib/format";
 import { tutoringProgress } from "@/lib/progress";
-import { Badge, EmptyState, LinkButton, PageHeader } from "@/components/ui";
+import { widthClass } from "@/lib/ui-scale";
+import { Badge, EmptyState, LinkButton, PageHeader, cx } from "@/components/ui";
 import { Avatar } from "@/components/avatar";
 import { TutoringBadge } from "@/components/status";
 
@@ -57,7 +58,7 @@ export default async function TutoringsPage() {
                       <span>{progress} %</span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-brand-500" style={{ width: `${progress}%` }} />
+                      <div className={cx("h-full rounded-full bg-brand-500", widthClass(progress))} />
                     </div>
                   </div>
                   <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">

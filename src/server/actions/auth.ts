@@ -1,13 +1,14 @@
 "use server";
 
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import { hashPassword, verifyAgainstDummy, verifyPassword } from "@/lib/auth/password";
 import { createSession, destroyAllSessions, destroyCurrentSession } from "@/lib/auth/session";
 import { requireUser } from "@/lib/auth/dal";
-import { rateLimit } from "@/lib/rate-limit";
+import { hit, peek, rateLimit, rateLimitIp, reset } from "@/lib/rate-limit";
+import { verifyPow } from "@/lib/pow";
 import { requestInfo } from "@/lib/request";
 import { audit } from "@/lib/audit";
 import { numericCode } from "@/lib/ids";
@@ -25,8 +26,13 @@ import {
 import { escapeHtml, sendMail } from "@/server/services/mail";
 import { notifyAdmins } from "@/server/services/notify";
 
-const MAX_FAILED_LOGINS = 5;
-const LOCK_MINUTES = 15;
+// Après 3 échecs sur un compte (toutes origines confondues), la connexion exige une vérification anti-robot :
+// le compte reste accessible à son titulaire, mais chaque essai coûte quelques secondes de calcul à un robot.
+// Après 5 échecs depuis une même adresse IP sur un même compte, cette adresse est bloquée 15 minutes sur ce compte :
+// un tiers ne peut donc pas bloquer le compte de quelqu'un d'autre.
+const POW_AFTER_FAILURES = 3;
+const PAIR_MAX_FAILURES = 5;
+const FAILURE_WINDOW_SECONDS = 15 * 60;
 const RESET_CODE_MINUTES = 15;
 const RESET_MAX_ATTEMPTS = 5;
 
@@ -40,14 +46,23 @@ function hashCode(userId: string, code: string): string {
   return createHash("sha256").update(`${userId}:${code}`).digest("hex");
 }
 
+function sameHash(a: string, b: string): boolean {
+  const x = Buffer.from(a, "hex");
+  const y = Buffer.from(b, "hex");
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
+const powRequired: ActionState = { ok: false, powRequired: true, message: "Vérification de sécurité en cours…" };
+
 export async function registerAction(_: ActionState, formData: FormData): Promise<ActionState> {
   const { ip } = await requestInfo();
-  if (!(await rateLimit(`register:${ip}`, 10, 3600))) {
+  if (!(await rateLimitIp("register", ip, 10, 3600))) {
     return { ok: false, message: "Trop de tentatives. Réessayez dans une heure." };
   }
   const parsed = registerSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fieldErrors(parsed.error);
   const d = parsed.data;
+  if (!(await verifyPow(formData.get("pow"), "register"))) return powRequired;
 
   let userId: string;
   try {
@@ -93,35 +108,40 @@ export async function loginAction(_: ActionState, formData: FormData): Promise<A
   const { email, password } = parsed.data;
   const { ip } = await requestInfo();
 
-  if (!(await rateLimit(`login:ip:${ip}`, 30, 900)) || !(await rateLimit(`login:email:${email}`, 10, 900))) {
-    return { ok: false, message: "Trop de tentatives. Réessayez dans 15 minutes." };
+  if (!(await rateLimitIp("login", ip, 30, FAILURE_WINDOW_SECONDS))) {
+    return { ok: false, message: "Trop de tentatives depuis votre connexion. Réessayez dans 15 minutes." };
+  }
+  const emailKey = `login:fail:email:${email}`;
+  const pairKey = ip === "inconnue" ? null : `login:fail:pair:${email}:${ip}`;
+  if (pairKey && (await peek(pairKey)) >= PAIR_MAX_FAILURES) {
+    return { ok: false, message: "Trop d'échecs pour ce compte depuis votre connexion. Réessayez dans 15 minutes ou réinitialisez votre mot de passe." };
+  }
+  if ((await peek(emailKey)) >= POW_AFTER_FAILURES && !(await verifyPow(formData.get("pow"), "login"))) {
+    return powRequired;
   }
 
   const user = await db.user.findUnique({ where: { email } });
   const invalid: ActionState = { ok: false, message: "E-mail ou mot de passe incorrect." };
+  const fail = async () => {
+    await hit(emailKey, FAILURE_WINDOW_SECONDS);
+    if (pairKey) await hit(pairKey, FAILURE_WINDOW_SECONDS);
+  };
   if (!user) {
     await verifyAgainstDummy(password);
+    await fail();
     return invalid;
   }
-  if (user.lockedUntil && user.lockedUntil > new Date()) {
-    return { ok: false, message: "Compte temporairement bloqué après plusieurs échecs. Réessayez plus tard." };
-  }
   if (!(await verifyPassword(user.passwordHash, password))) {
-    const failed = user.failedLogins + 1;
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        failedLogins: failed >= MAX_FAILED_LOGINS ? 0 : failed,
-        lockedUntil: failed >= MAX_FAILED_LOGINS ? new Date(Date.now() + LOCK_MINUTES * 60000) : undefined,
-      },
-    });
+    await fail();
     await audit(user.id, "user.login_failed", "User", user.id);
     return invalid;
   }
   if (user.status !== "ACTIVE") {
     return { ok: false, message: "Ce compte est suspendu. Contactez le support Access." };
   }
-  await db.user.update({ where: { id: user.id }, data: { failedLogins: 0, lockedUntil: null, lastLoginAt: new Date() } });
+  await reset(emailKey);
+  if (pairKey) await reset(pairKey);
+  await db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   await createSession(user.id);
   await audit(user.id, "user.login", "User", user.id);
   redirect(safeNext(formData.get("suite"), ROLE_HOME[user.role]));
@@ -141,7 +161,8 @@ export async function forgotPasswordAction(_: ActionState, formData: FormData): 
     ok: true,
     message: "Si un compte correspond à cette adresse, un code à 6 chiffres vient d'y être envoyé. Il expire dans 15 minutes.",
   };
-  if (!(await rateLimit(`reset:ip:${ip}`, 10, 3600)) || !(await rateLimit(`reset:email:${email}`, 3, 3600))) {
+  if (!(await verifyPow(formData.get("pow"), "forgot"))) return powRequired;
+  if (!(await rateLimitIp("reset", ip, 10, 3600)) || !(await rateLimit(`reset:email:${email}`, 3, 3600))) {
     return done;
   }
   const user = await db.user.findUnique({ where: { email } });
@@ -182,7 +203,7 @@ export async function resetPasswordAction(_: ActionState, formData: FormData): P
     orderBy: { createdAt: "desc" },
   });
   if (!token || token.attempts >= RESET_MAX_ATTEMPTS) return invalid;
-  if (token.codeHash !== hashCode(user.id, code)) {
+  if (!sameHash(token.codeHash, hashCode(user.id, code))) {
     await db.passwordResetToken.update({ where: { id: token.id }, data: { attempts: { increment: 1 } } });
     return invalid;
   }
@@ -190,7 +211,7 @@ export async function resetPasswordAction(_: ActionState, formData: FormData): P
     db.passwordResetToken.update({ where: { id: token.id }, data: { usedAt: new Date() } }),
     db.user.update({
       where: { id: user.id },
-      data: { passwordHash: await hashPassword(password), failedLogins: 0, lockedUntil: null },
+      data: { passwordHash: await hashPassword(password) },
     }),
   ]);
   await destroyAllSessions(user.id);

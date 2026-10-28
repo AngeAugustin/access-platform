@@ -5,7 +5,8 @@ import { requireRole } from "@/lib/auth/dal";
 import { TIME_SLOTS } from "@/lib/constants";
 import { formatDate, formatFcfa, fullName } from "@/lib/format";
 import { tutoringProgress } from "@/lib/progress";
-import { Card, EmptyState, Notice, PageHeader, Stars } from "@/components/ui";
+import { widthClass } from "@/lib/ui-scale";
+import { Card, EmptyState, Notice, PageHeader, Stars, cx } from "@/components/ui";
 import { Avatar } from "@/components/avatar";
 import { InstallmentBadge, LessonBadge, TutoringBadge } from "@/components/status";
 import { EducatorReviewForm, LessonReview, StopTutoringForm } from "@/components/parent/tutoring-actions";
@@ -80,7 +81,7 @@ export default async function TutoringPage({ params, searchParams }: { params: P
                 <span>{progress} %</span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-brand-500" style={{ width: `${progress}%` }} />
+                <div className={cx("h-full rounded-full bg-brand-500", widthClass(progress))} />
               </div>
             </div>
             {t.stoppedAt && (

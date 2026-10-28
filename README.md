@@ -8,7 +8,7 @@ Application web progressive (PWA) qui remplace les cinq dépôts d'origine (API 
 
 ## Démarrage
 
-Prérequis : Node.js 20.9+ et PostgreSQL 14+.
+Prérequis : Node.js 22+ et PostgreSQL 14+.
 
 ```bash
 cp .env.example .env        # puis renseigner DATABASE_URL et les autres variables
@@ -29,7 +29,9 @@ La grille tarifaire créée par le seed est un **exemple** : remplacez-la par le
 | `npm run dev` / `build` / `start` | Développement, build et serveur de production |
 | `npm run typecheck` | Génère les types de routes puis vérifie TypeScript |
 | `npm run lint` | ESLint |
-| `npm test` | Tests unitaires (Vitest) : facturation, signature webhook, validation, fichiers |
+| `npm test` | Tests unitaires (Vitest) : facturation, signature webhook, anti-robot, adresse IP, validation, fichiers |
+| `npm run audit:deps` | Audit des dépendances de production |
+| `npm run security:check` | Contrôles de sécurité contre une instance démarrée (`BASE_URL=…`) |
 | `npm run db:migrate` | Applique les migrations Prisma |
 | `npm run db:seed` | Initialise la base |
 | `npm run migrate:legacy` | Reprend les données de l'ancienne base MySQL (voir plus bas) |

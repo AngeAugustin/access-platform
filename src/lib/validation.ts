@@ -15,6 +15,8 @@ export type ActionState = {
   ok?: boolean;
   message?: string;
   errors?: Record<string, string[] | undefined>;
+  // Le serveur exige une vérification anti-robot avant de traiter la demande.
+  powRequired?: boolean;
 };
 
 export function fieldErrors(error: z.ZodError): ActionState {

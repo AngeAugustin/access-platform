@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { DOCUMENT_TYPES, REQUIRED_DOCUMENTS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { widthClass } from "@/lib/ui-scale";
 import { Card, Notice, PageHeader, Stars, cx } from "@/components/ui";
 import { ProfileBadge } from "@/components/status";
 import { EducatorProfileForm, SubmitProfileButton } from "@/components/educator/profile-form";
@@ -75,7 +76,7 @@ export default async function DossierPage() {
           {!validated && (
             <Card title="Avancement" description={`${doneCount} étape${doneCount > 1 ? "s" : ""} sur ${checklist.length}`}>
               <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${(doneCount / checklist.length) * 100}%` }} />
+                <div className={cx("h-full rounded-full bg-brand-500 transition-all", widthClass((doneCount / checklist.length) * 100))} />
               </div>
               <ul className="space-y-2.5">
                 {checklist.map((c) => (

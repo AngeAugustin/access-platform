@@ -112,7 +112,7 @@ export function LessonForm({ tutoringId, childName, minDate, maxDate }: { tutori
   const err = (name: string) => state.errors?.[name]?.[0];
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="space-y-5" noValidate>
+    <form ref={formRef} onSubmit={onSubmit} method="post" className="space-y-5" noValidate>
       {state.message && (
         <p
           role="status"

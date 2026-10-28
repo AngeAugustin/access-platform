@@ -41,6 +41,8 @@ export function ActionForm({
       <form
         ref={ref}
         className={className}
+        // Sans JavaScript, le navigateur enverrait les champs dans l'URL (GET) : on impose POST.
+        method="post"
         noValidate
         onSubmit={(e) => {
           e.preventDefault();

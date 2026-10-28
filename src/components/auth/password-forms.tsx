@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { changePasswordAction, forgotPasswordAction, resetPasswordAction } from "@/server/actions/auth";
 import { ActionForm, FormMessage, SubmitButton, TextField, useFormState } from "@/components/ui/form";
+import { PowGuard } from "@/components/security/pow-guard";
 
 export function ForgotPasswordForm() {
   return (
     <ActionForm action={forgotPasswordAction} className="space-y-5">
       <FormMessage />
+      <PowGuard purpose="forgot" />
       <TextField label="Adresse e-mail du compte" name="email" type="email" autoComplete="email" required />
       <SubmitButton className="w-full" size="lg">
         Recevoir un code

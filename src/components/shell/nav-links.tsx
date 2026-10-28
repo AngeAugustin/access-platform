@@ -83,6 +83,8 @@ export function SideNav({ items, root }: { items: NavItem[]; root: string }) {
   );
 }
 
+const columns: Record<number, string> = { 3: "grid-cols-3", 4: "grid-cols-4", 5: "grid-cols-5", 6: "grid-cols-6" };
+
 export function BottomNav({ items, root }: { items: NavItem[]; root: string }) {
   const pathname = usePathname();
   const mobileItems = items.filter((i) => i.mobile);
@@ -91,7 +93,7 @@ export function BottomNav({ items, root }: { items: NavItem[]; root: string }) {
       className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/80 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
       aria-label="Navigation mobile"
     >
-      <ul className="mx-auto grid grid-cols-1 max-w-md" style={{ gridTemplateColumns: `repeat(${mobileItems.length}, minmax(0, 1fr))` }}>
+      <ul className={cx("mx-auto grid max-w-md", columns[mobileItems.length] ?? "grid-cols-5")}>
         {mobileItems.map((item) => {
           const Icon = icons[item.icon];
           const active = isActive(pathname, item.href, root);

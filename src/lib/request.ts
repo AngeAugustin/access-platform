@@ -1,9 +1,9 @@
 import "server-only";
 import { headers } from "next/headers";
+import { clientIpConfigFromEnv, clientIpFrom } from "@/lib/client-ip";
 
 export async function requestInfo() {
   const h = await headers();
-  const forwarded = h.get("x-forwarded-for");
-  const ip = forwarded ? forwarded.split(",")[0].trim() : (h.get("x-real-ip") ?? "inconnue");
+  const ip = clientIpFrom((name) => h.get(name), clientIpConfigFromEnv());
   return { ip, userAgent: h.get("user-agent")?.slice(0, 300) ?? null };
 }
