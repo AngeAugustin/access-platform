@@ -1,0 +1,528 @@
+// Schéma de données de la plateforme Access.
+// Conventions : identifiants cuid, montants en francs CFA (entiers), dates en UTC.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Comptes et sécurité
+// ---------------------------------------------------------------------------
+
+enum Role {
+  PARENT
+  EDUCATOR
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model User {
+  id             String        @id @default(cuid())
+  npi            String        @unique
+  email          String        @unique
+  phone          String        @unique
+  firstName      String
+  lastName       String
+  passwordHash   String
+  role           Role
+  isSuperAdmin   Boolean       @default(false)
+  status         AccountStatus @default(ACTIVE)
+  address        String?
+  city           String?
+  failedLogins   Int           @default(0)
+  lockedUntil    DateTime?
+  lastLoginAt    DateTime?
+  acceptedTermsAt DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  sessions          Session[]
+  resetTokens       PasswordResetToken[]
+  educatorProfile   EducatorProfile?
+  children          Child[]
+  parentTutorings   Tutoring[]          @relation("ParentTutorings")
+  complaints        Complaint[]         @relation("ComplaintAuthor")
+  handledComplaints Complaint[]         @relation("ComplaintHandler")
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
+  payments          Payment[]
+  reviews           Review[]
+  auditLogs         AuditLog[]
+  executedPayouts   Payout[]            @relation("PayoutExecutor")
+  validatedProfiles EducatorProfile[]   @relation("ProfileValidator")
+}
+
+// Session côté serveur : le cookie ne contient qu'un jeton opaque, la base n'en stocke que l'empreinte SHA-256.
+model Session {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  lastUsedAt DateTime @default(now())
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int       @default(0)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Éducateurs
+// ---------------------------------------------------------------------------
+
+enum ProfileStatus {
+  INCOMPLETE
+  SUBMITTED
+  VALIDATED
+  REJECTED
+}
+
+enum DocumentType {
+  ID_CARD
+  CRIMINAL_RECORD
+  ACADEMIC_DIPLOMA
+  PROFESSIONAL_DIPLOMA
+  PHOTO
+}
+
+enum Weekday {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum TimeSlot {
+  S08_11
+  S11_14
+  S14_17
+  S17_20
+}
+
+model EducatorProfile {
+  id                 String        @id @default(cuid())
+  userId             String        @unique
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  birthDate          DateTime?
+  maritalStatus      String?
+  experienceYears    Int?
+  background         String?
+  bio                String?
+  subjects           String[]
+  classLevels        String[]
+  zone               String?
+  guarantor1Name     String?
+  guarantor1Address  String?
+  guarantor1Phone    String?
+  guarantor2Name     String?
+  guarantor2Address  String?
+  guarantor2Phone    String?
+  payoutPhone        String?
+  status             ProfileStatus @default(INCOMPLETE)
+  level              String?
+  stars              Int?
+  rejectionReason    String?
+  submittedAt        DateTime?
+  validatedAt        DateTime?
+  validatedById      String?
+  validatedBy        User?         @relation("ProfileValidator", fields: [validatedById], references: [id], onDelete: SetNull)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  documents      EducatorDocument[]
+  availabilities Availability[]
+  tutorings      Tutoring[]
+  bookedSlots    BookedSlot[]
+  reviews        Review[]
+  payouts        Payout[]
+
+  @@index([status])
+}
+
+model EducatorDocument {
+  id           String          @id @default(cuid())
+  educatorId   String
+  educator     EducatorProfile @relation(fields: [educatorId], references: [id], onDelete: Cascade)
+  type         DocumentType
+  storageKey   String          @unique
+  mimeType     String
+  size         Int
+  originalName String
+  uploadedAt   DateTime        @default(now())
+
+  @@unique([educatorId, type])
+}
+
+model Availability {
+  id         String          @id @default(cuid())
+  educatorId String
+  educator   EducatorProfile @relation(fields: [educatorId], references: [id], onDelete: Cascade)
+  day        Weekday
+  slot       TimeSlot
+
+  @@unique([educatorId, day, slot])
+}
+
+// ---------------------------------------------------------------------------
+// Enfants
+// ---------------------------------------------------------------------------
+
+enum Sex {
+  F
+  M
+}
+
+enum SubjectLevelValue {
+  WEAK
+  AVERAGE
+  GOOD
+  VERY_GOOD
+}
+
+model Child {
+  id               String         @id @default(cuid())
+  parentId         String
+  parent           User           @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  npi              String?        @unique
+  firstName        String
+  lastName         String
+  sex              Sex
+  birthDate        DateTime
+  previousClass    String?
+  previousSchool   String?
+  currentClass     String
+  currentSchool    String?
+  favoriteSubjects String?
+  interests        String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  subjectLevels SubjectLevel[]
+  tutorings     Tutoring[]
+
+  @@index([parentId])
+}
+
+model SubjectLevel {
+  id      String            @id @default(cuid())
+  childId String
+  child   Child             @relation(fields: [childId], references: [id], onDelete: Cascade)
+  subject String
+  level   SubjectLevelValue
+
+  @@unique([childId, subject])
+}
+
+// ---------------------------------------------------------------------------
+// Tarifs, tutorats, séances
+// ---------------------------------------------------------------------------
+
+model Tariff {
+  id              String   @id @default(cuid())
+  classLevel      String   @unique
+  hourlyRate      Int
+  sessionsPerWeek Int
+  hoursPerSession Int
+  updatedAt       DateTime @updatedAt
+}
+
+enum TutoringStatus {
+  ACTIVE
+  COMPLETED
+  STOPPED
+}
+
+model Tutoring {
+  id              String          @id @default(cuid())
+  reference       String          @unique
+  parentId        String
+  parent          User            @relation("ParentTutorings", fields: [parentId], references: [id], onDelete: Restrict)
+  educatorId      String
+  educator        EducatorProfile @relation(fields: [educatorId], references: [id], onDelete: Restrict)
+  childId         String
+  child           Child           @relation(fields: [childId], references: [id], onDelete: Restrict)
+  durationWeeks   Int
+  startDate       DateTime
+  endDate         DateTime
+  status          TutoringStatus  @default(ACTIVE)
+  // Instantané du tarif au moment de la création : une modification de la grille ne change pas un contrat en cours.
+  classLevel      String
+  hourlyRate      Int
+  sessionsPerWeek Int
+  hoursPerSession Int
+  slotsLabel      String
+  stoppedAt       DateTime?
+  stopReason      String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  bookedSlots  BookedSlot[]
+  lessons      Lesson[]
+  installments Installment[]
+  review       Review?
+
+  @@index([parentId])
+  @@index([educatorId])
+  @@index([status])
+}
+
+// Créneau réservé : la contrainte unique empêche deux tutorats actifs sur le même créneau d'un éducateur.
+// Les lignes sont supprimées quand le tutorat se termine.
+model BookedSlot {
+  id         String          @id @default(cuid())
+  tutoringId String
+  tutoring   Tutoring        @relation(fields: [tutoringId], references: [id], onDelete: Cascade)
+  educatorId String
+  educator   EducatorProfile @relation(fields: [educatorId], references: [id], onDelete: Cascade)
+  day        Weekday
+  slot       TimeSlot
+
+  @@unique([educatorId, day, slot])
+}
+
+enum LessonStatus {
+  RECORDED
+  CONFIRMED
+  DISPUTED
+}
+
+model Lesson {
+  id             String       @id @default(cuid())
+  tutoringId     String
+  tutoring       Tutoring     @relation(fields: [tutoringId], references: [id], onDelete: Cascade)
+  date           DateTime     @db.Date
+  slot           TimeSlot
+  workDone       String
+  observation    String?
+  status         LessonStatus @default(RECORDED)
+  parentComment  String?
+  confirmedAt    DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@unique([tutoringId, date, slot])
+  @@index([tutoringId])
+}
+
+model Review {
+  id         String          @id @default(cuid())
+  tutoringId String          @unique
+  tutoring   Tutoring        @relation(fields: [tutoringId], references: [id], onDelete: Cascade)
+  parentId   String
+  parent     User            @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  educatorId String
+  educator   EducatorProfile @relation(fields: [educatorId], references: [id], onDelete: Cascade)
+  rating     Int
+  comment    String?
+  createdAt  DateTime        @default(now())
+
+  @@index([educatorId])
+}
+
+// ---------------------------------------------------------------------------
+// Paiements
+// ---------------------------------------------------------------------------
+
+enum InstallmentStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model Installment {
+  id         String            @id @default(cuid())
+  tutoringId String
+  tutoring   Tutoring          @relation(fields: [tutoringId], references: [id], onDelete: Cascade)
+  index      Int
+  weeks      Int
+  amount     Int
+  dueDate    DateTime
+  status     InstallmentStatus @default(PENDING)
+  reference  String            @unique
+  paidAt     DateTime?
+  remindedAt DateTime?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  payments Payment[]
+  payout   Payout?
+
+  @@unique([tutoringId, index])
+  @@index([status, dueDate])
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  CANCELLED
+}
+
+// Encaissement parent via FedaPay. Une échéance peut avoir plusieurs tentatives, une seule approuvée.
+model Payment {
+  id                    String        @id @default(cuid())
+  installmentId         String
+  installment           Installment   @relation(fields: [installmentId], references: [id], onDelete: Restrict)
+  payerId               String
+  payer                 User          @relation(fields: [payerId], references: [id], onDelete: Restrict)
+  amount                Int
+  provider              String        @default("fedapay")
+  providerTransactionId String        @unique
+  status                PaymentStatus @default(PENDING)
+  approvedAt            DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([installmentId])
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum PayoutMethod {
+  MANUAL
+  FEDAPAY
+}
+
+// Reversement à l'éducateur, une fois l'échéance payée par le parent.
+model Payout {
+  id                String          @id @default(cuid())
+  installmentId     String          @unique
+  installment       Installment     @relation(fields: [installmentId], references: [id], onDelete: Restrict)
+  educatorId        String
+  educator          EducatorProfile @relation(fields: [educatorId], references: [id], onDelete: Restrict)
+  grossAmount       Int
+  commissionAmount  Int
+  netAmount         Int
+  status            PayoutStatus    @default(PENDING)
+  method            PayoutMethod?
+  providerReference String?
+  failureReason     String?
+  executedById      String?
+  executedBy        User?           @relation("PayoutExecutor", fields: [executedById], references: [id], onDelete: SetNull)
+  executedAt        DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([status])
+  @@index([educatorId])
+}
+
+// Événements webhook déjà traités : garantit l'idempotence.
+model WebhookEvent {
+  id         String   @id
+  provider   String
+  name       String
+  receivedAt DateTime @default(now())
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Réclamations et notifications
+// ---------------------------------------------------------------------------
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+model Complaint {
+  id          String          @id @default(cuid())
+  authorId    String
+  author      User            @relation("ComplaintAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  subject     String
+  details     String
+  status      ComplaintStatus @default(OPEN)
+  response    String?
+  handledById String?
+  handledBy   User?           @relation("ComplaintHandler", fields: [handledById], references: [id], onDelete: SetNull)
+  handledAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([authorId])
+  @@index([status])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
