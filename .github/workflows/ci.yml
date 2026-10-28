@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    # Audit hebdomadaire des dépendances, même sans nouveau commit.
+    - cron: "17 6 * * 1"
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: access
+          POSTGRES_PASSWORD: access
+          POSTGRES_DB: access
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U access" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://access:access@localhost:5432/access?schema=public
+      POW_SECRET: ci-pow-secret-ci-pow-secret-ci-pow-secret
+      CRON_SECRET: ci-cron-secret
+      TRUSTED_PROXY_COUNT: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Audit des dépendances de production
+        run: npm run audit:deps
+      - run: npx prisma migrate deploy
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Contrôles de sécurité contre l'application démarrée
+        run: |
+          npm start &
+          npx --yes wait-on@8.0.3 --timeout 60000 http://localhost:3000/connexion
+          npm run security:check

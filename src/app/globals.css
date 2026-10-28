@@ -1,26 +1,94 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Système de design Access : neutres froids, une couleur de marque (indigo profond), accents sémantiques. */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-brand-50: #eef1ff;
+  --color-brand-100: #e0e5ff;
+  --color-brand-200: #c7cffe;
+  --color-brand-300: #a4affc;
+  --color-brand-400: #7d86f8;
+  --color-brand-500: #5f63f1;
+  --color-brand-600: #4b48e3;
+  --color-brand-700: #3f39c8;
+  --color-brand-800: #3431a2;
+  --color-brand-900: #2f2e80;
+  --color-brand-950: #1c1a4a;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-ink: #0f172a;
+  --color-canvas: #f6f7fb;
+
+  --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px -4px rgb(15 23 42 / 0.06);
+  --shadow-lift: 0 2px 4px rgb(15 23 42 / 0.04), 0 16px 40px -12px rgb(15 23 42 / 0.18);
+
+  --animate-fade-in: fade-in 0.25s ease-out;
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
 }
 
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply bg-canvas text-ink antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Par défaut un fieldset ne rétrécit pas sous la largeur de son contenu : on l'autorise (tableaux défilants). */
+fieldset {
+  min-width: 0;
+}
+
+::selection {
+  @apply bg-brand-100 text-brand-900;
+}
+
+/* Champs de formulaire */
+.field {
+  @apply block h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-[15px] text-ink shadow-[0_1px_1px_rgb(15_23_42/0.03)] outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-slate-50 aria-[invalid=true]:border-rose-400 aria-[invalid=true]:focus:ring-rose-100;
+}
+
+textarea.field {
+  @apply h-auto py-2.5 leading-relaxed;
+}
+
+select.field {
+  @apply appearance-none bg-[length:16px] bg-[right_0.85rem_center] bg-no-repeat pr-10;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+input[type="file"].field {
+  @apply h-auto py-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-700 hover:file:bg-brand-100;
+}
+
+.label {
+  @apply mb-1.5 block text-sm font-medium text-slate-700;
+}
+
+/* Cases à cocher et boutons radio présentés comme des puces sélectionnables */
+.choice {
+  @apply flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition hover:border-slate-300 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50 has-[:checked]:text-brand-800 has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-brand-100;
+}
+
+.choice input {
+  @apply size-4 accent-brand-600;
+}
+
+/* Barre de défilement discrète pour les tableaux larges */
+.scroll-x {
+  scrollbar-width: thin;
 }
