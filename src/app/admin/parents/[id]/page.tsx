@@ -6,6 +6,7 @@ import { formatDate, formatDateTime, formatFcfa, fullName } from "@/lib/format";
 import { Card, DefinitionList, PageHeader, Table, Td } from "@/components/ui";
 import { TutoringBadge } from "@/components/status";
 import { UserStatusForm } from "@/components/admin/forms";
+import { Avatar } from "@/components/avatar";
 
 export const metadata = { title: "Fiche parent" };
 
@@ -23,9 +24,19 @@ export default async function AdminParentPage({ params }: { params: Promise<{ id
   if (!p) notFound();
   return (
     <>
-      <PageHeader title={fullName(p)} back="/admin/parents" />
-      <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-5">
+      <PageHeader
+        back="/admin/parents"
+        eyebrow="Fiche parent"
+        title={
+          <span className="flex items-center gap-3">
+            <Avatar name={fullName(p)} size={48} />
+            {fullName(p)}
+          </span>
+        }
+        subtitle={p.status === "SUSPENDED" ? "Compte suspendu" : `${p.children.length} enfant(s) · ${p.parentTutorings.length} tutorat(s)`}
+      />
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.5fr_1fr]">
+        <div className="space-y-6">
           <Card title="Coordonnées">
             <DefinitionList
               items={[
@@ -52,7 +63,7 @@ export default async function AdminParentPage({ params }: { params: Promise<{ id
             <ul className="divide-y divide-slate-100 text-sm">
               {p.parentTutorings.map((t) => (
                 <li key={t.id} className="flex justify-between gap-2 py-2">
-                  <Link href={`/admin/tutorats/${t.id}`} className="text-brand-700 hover:underline">
+                  <Link href={`/admin/tutorats/${t.id}`} className="font-medium text-brand-700 hover:text-brand-800">
                     {fullName(t.child)} avec {fullName(t.educator.user)}
                   </Link>
                   <TutoringBadge status={t.status} />
@@ -61,15 +72,15 @@ export default async function AdminParentPage({ params }: { params: Promise<{ id
             </ul>
           </Card>
         </div>
-        <div className="space-y-5">
+        <div className="space-y-6">
           <Card title="Compte">
             <UserStatusForm userId={p.id} status={p.status} />
           </Card>
           <Card title="Derniers paiements">
             {p.payments.length === 0 ? (
-              <p className="text-sm text-slate-600">Aucun.</p>
+              <p className="text-sm text-slate-500">Aucun.</p>
             ) : (
-              <Table head={["Date", "Montant"]}>
+              <Table bare head={["Date", "Montant"]}>
                 {p.payments.map((pay) => (
                   <tr key={pay.id}>
                     <Td>{formatDate(pay.approvedAt)}</Td>

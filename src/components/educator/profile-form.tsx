@@ -28,7 +28,7 @@ function CheckGroup({ name, options, selected, columns = "sm:grid-cols-3" }: { n
   return (
     <div className={`grid grid-cols-2 gap-2 ${columns}`}>
       {options.map(([value, label]) => (
-        <label key={value} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+        <label key={value} className="choice">
           <input type="checkbox" name={name} value={value} defaultChecked={selected.includes(value)} />
           {label}
         </label>
@@ -41,10 +41,10 @@ export function EducatorProfileForm({ defaults }: { defaults: EducatorDefaults }
   const days = Object.entries(WEEKDAYS);
   const slots = Object.entries(TIME_SLOTS);
   return (
-    <ActionForm action={saveEducatorProfileAction} className="space-y-6">
+    <ActionForm action={saveEducatorProfileAction} className="space-y-8">
       <FormMessage />
-      <fieldset className="grid gap-4 sm:grid-cols-2">
-        <legend className="mb-2 text-base font-semibold">Situation</legend>
+      <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <legend className="col-span-full mb-1 text-[15px] font-semibold text-ink">Situation</legend>
         <TextField label="Date de naissance" name="birthDate" type="date" defaultValue={defaults.birthDate} required />
         <TextField label="Situation matrimoniale" name="maritalStatus" defaultValue={defaults.maritalStatus} required />
         <TextField label="Années d'expérience" name="experienceYears" type="number" min={0} max={60} defaultValue={defaults.experienceYears} required />
@@ -53,25 +53,25 @@ export function EducatorProfileForm({ defaults }: { defaults: EducatorDefaults }
         <TextArea label="Présentation aux familles" name="bio" defaultValue={defaults.bio} rows={3} className="sm:col-span-2" />
       </fieldset>
       <fieldset>
-        <legend className="mb-2 text-base font-semibold">Matières enseignées</legend>
+        <legend className="mb-3 text-[15px] font-semibold text-ink">Matières enseignées</legend>
         <CheckGroup name="subjects" options={Object.entries(SUBJECTS)} selected={defaults.subjects} />
         <FieldError name="subjects" />
       </fieldset>
       <fieldset>
-        <legend className="mb-2 text-base font-semibold">Classes</legend>
+        <legend className="mb-3 text-[15px] font-semibold text-ink">Classes</legend>
         <CheckGroup name="classLevels" options={CLASS_LEVELS.map((c) => [c, c])} selected={defaults.classLevels} columns="sm:grid-cols-4" />
         <FieldError name="classLevels" />
       </fieldset>
       <fieldset>
-        <legend className="mb-1 text-base font-semibold">Disponibilités</legend>
-        <p className="mb-2 text-sm text-slate-600">Jusqu&apos;à {MAX_AVAILABILITIES} créneaux de 3 heures. Un créneau réservé par une famille ne peut pas être retiré.</p>
-        <div className="overflow-x-auto">
-          <table className="w-full text-center text-xs">
+        <legend className="text-[15px] font-semibold text-ink">Disponibilités</legend>
+        <p className="mt-1 mb-3 text-sm text-slate-500">Jusqu&apos;à {MAX_AVAILABILITIES} créneaux de 3 heures. Un créneau réservé par une famille ne peut pas être retiré.</p>
+        <div className="scroll-x -mx-1 overflow-x-auto px-1">
+          <table className="w-full min-w-[460px] border-separate border-spacing-1 text-center text-xs">
             <thead>
               <tr>
-                <th />
+                <th className="w-16" />
                 {days.map(([d, label]) => (
-                  <th key={d} className="p-1 font-medium text-slate-600">
+                  <th key={d} className="pb-1 font-medium text-slate-500">
                     {label.slice(0, 3)}
                   </th>
                 ))}
@@ -80,15 +80,15 @@ export function EducatorProfileForm({ defaults }: { defaults: EducatorDefaults }
             <tbody>
               {slots.map(([s, label]) => (
                 <tr key={s}>
-                  <th className="whitespace-nowrap p-1 text-left font-medium text-slate-600">{label}</th>
+                  <th className="pr-2 text-left font-medium whitespace-nowrap text-slate-500">{label}</th>
                   {days.map(([d]) => {
                     const value = `${d}|${s}`;
                     const booked = defaults.booked.includes(value);
                     return (
-                      <td key={d} className="p-1">
-                        <label className="flex cursor-pointer justify-center rounded border border-slate-200 py-2 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
-                          <input type="checkbox" name="availabilities" value={value} defaultChecked={defaults.availabilities.includes(value)} aria-label={`${d} ${label}`} />
-                          {booked && <span className="ml-1 text-[10px] text-slate-500">réservé</span>}
+                      <td key={d}>
+                        <label className="flex cursor-pointer flex-col items-center gap-0.5 rounded-lg border border-slate-200 py-2 transition hover:border-slate-300 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50">
+                          <input type="checkbox" name="availabilities" value={value} defaultChecked={defaults.availabilities.includes(value)} aria-label={`${d} ${label}`} className="size-4 accent-emerald-600" />
+                          {booked && <span className="text-[10px] font-medium text-emerald-700">réservé</span>}
                         </label>
                       </td>
                     );
@@ -100,8 +100,8 @@ export function EducatorProfileForm({ defaults }: { defaults: EducatorDefaults }
         </div>
         <FieldError name="availabilities" />
       </fieldset>
-      <fieldset className="grid gap-4 sm:grid-cols-3">
-        <legend className="mb-2 text-base font-semibold">Garants</legend>
+      <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <legend className="col-span-full mb-1 text-[15px] font-semibold text-ink">Garants</legend>
         <TextField label="Garant 1 — nom" name="guarantor1Name" defaultValue={defaults.guarantor1Name} required />
         <TextField label="Adresse" name="guarantor1Address" defaultValue={defaults.guarantor1Address} required />
         <TextField label="Téléphone" name="guarantor1Phone" type="tel" defaultValue={defaults.guarantor1Phone} required />
@@ -109,11 +109,13 @@ export function EducatorProfileForm({ defaults }: { defaults: EducatorDefaults }
         <TextField label="Adresse" name="guarantor2Address" id="guarantor2Address" defaultValue={defaults.guarantor2Address} required />
         <TextField label="Téléphone" name="guarantor2Phone" id="guarantor2Phone" type="tel" defaultValue={defaults.guarantor2Phone} required />
       </fieldset>
-      <fieldset className="grid gap-4 sm:grid-cols-2">
-        <legend className="mb-2 text-base font-semibold">Reversements</legend>
+      <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <legend className="col-span-full mb-1 text-[15px] font-semibold text-ink">Reversements</legend>
         <TextField label="Numéro Mobile Money" name="payoutPhone" type="tel" defaultValue={defaults.payoutPhone} required hint="Numéro MTN ou Moov sur lequel Access vous reverse vos gains." />
       </fieldset>
-      <SubmitButton>Enregistrer le dossier</SubmitButton>
+      <div className="flex justify-end border-t border-slate-100 pt-6">
+        <SubmitButton size="lg">Enregistrer le dossier</SubmitButton>
+      </div>
     </ActionForm>
   );
 }
@@ -122,7 +124,7 @@ export function SubmitProfileButton() {
   return (
     <ActionForm action={submitProfileAction} className="space-y-3" confirmMessage="Transmettre votre dossier à Access pour vérification ?">
       <FormMessage />
-      <SubmitButton>Transmettre mon dossier pour validation</SubmitButton>
+      <SubmitButton className="w-full">Transmettre pour validation</SubmitButton>
     </ActionForm>
   );
 }

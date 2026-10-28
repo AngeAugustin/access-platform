@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { Smartphone, X } from "lucide-react";
 
 type InstallPromptEvent = Event & { prompt: () => Promise<void> };
 
@@ -42,7 +43,9 @@ export function InstallHint() {
   };
 
   return (
-    <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-800">
+    <div className="mb-6 flex items-start gap-3 rounded-2xl border border-brand-200/70 bg-brand-50/70 p-4 text-sm text-brand-900">
+      <Smartphone className="mt-0.5 size-5 shrink-0 text-brand-600" strokeWidth={1.75} aria-hidden />
+      <div className="flex-1">
       {promptEvent ? (
         <p>
           Installez Access sur votre téléphone pour l&apos;ouvrir comme une application et recevoir les notifications.{" "}
@@ -53,8 +56,9 @@ export function InstallHint() {
       ) : (
         <p>Pour installer Access sur iPhone : touchez le bouton Partager, puis « Sur l&apos;écran d&apos;accueil ». Les notifications ne fonctionnent qu&apos;après cette installation.</p>
       )}
-      <button onClick={close} aria-label="Fermer" className="text-brand-700">
-        ✕
+      </div>
+      <button onClick={close} aria-label="Fermer" className="rounded-lg p-1 text-brand-700 hover:bg-brand-100">
+        <X className="size-4" aria-hidden />
       </button>
     </div>
   );

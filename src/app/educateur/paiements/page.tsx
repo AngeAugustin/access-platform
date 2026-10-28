@@ -1,10 +1,11 @@
+import { Banknote, CircleCheck, Hourglass, Wallet } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { formatDate, formatFcfa, fullName } from "@/lib/format";
-import { Card, PageHeader, Stat, Table, Td } from "@/components/ui";
+import { Card, EmptyState, List, ListRow, PageHeader, Stat } from "@/components/ui";
 import { InstallmentBadge, PayoutBadge } from "@/components/status";
 
-export const metadata = { title: "Mes paiements" };
+export const metadata = { title: "Mes revenus" };
 
 export default async function EducatorPaymentsPage() {
   const user = await requireRole("EDUCATOR");
@@ -29,52 +30,57 @@ export default async function EducatorPaymentsPage() {
 
   return (
     <>
-      <PageHeader title="Mes paiements" subtitle={`Reversements sur le ${profile?.payoutPhone ?? "numéro Mobile Money à renseigner dans votre dossier"}.`} />
-      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <Stat label="Reçu" value={formatFcfa(received)} />
-        <Stat label="À recevoir" value={formatFcfa(toReceive)} hint="échéances payées par les parents" />
-        <Stat label="Échéances non encore payées" value={upcoming.length} />
+      <PageHeader
+        title="Revenus"
+        subtitle={profile?.payoutPhone ? `Vos reversements arrivent sur le ${profile.payoutPhone}.` : "Renseignez votre numéro Mobile Money dans votre dossier."}
+      />
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 [&>:last-child:nth-child(odd)]:col-span-2 lg:[&>:last-child:nth-child(odd)]:col-span-1">
+        <Stat label="Déjà reçu" value={formatFcfa(received)} icon={CircleCheck} tone="green" />
+        <Stat label="À recevoir" value={formatFcfa(toReceive)} hint="échéances payées par les parents" icon={Wallet} />
+        <Stat label="Échéances à venir" value={upcoming.length} hint="pas encore payées" icon={Hourglass} tone="amber" />
       </div>
-      <Card title="Reversements" className="mb-5">
-        {payouts.length === 0 ? (
-          <p className="text-sm text-slate-600">Aucun reversement pour l&apos;instant.</p>
-        ) : (
-          <Table head={["Élève", "Échéance", "Montant payé", "Commission", "Net", "Statut", "Date"]}>
-            {payouts.map((p) => (
-              <tr key={p.id}>
-                <Td>{fullName(p.installment.tutoring.child)}</Td>
-                <Td>{p.installment.index}</Td>
-                <Td className="whitespace-nowrap">{formatFcfa(p.grossAmount)}</Td>
-                <Td className="whitespace-nowrap">{formatFcfa(p.commissionAmount)}</Td>
-                <Td className="whitespace-nowrap font-semibold">{formatFcfa(p.netAmount)}</Td>
-                <Td>
-                  <PayoutBadge status={p.status} />
-                </Td>
-                <Td className="whitespace-nowrap">{formatDate(p.executedAt)}</Td>
-              </tr>
-            ))}
-          </Table>
-        )}
-      </Card>
-      <Card title="Échéances en attente de paiement par les parents">
-        {upcoming.length === 0 ? (
-          <p className="text-sm text-slate-600">Aucune.</p>
-        ) : (
-          <Table head={["Élève", "Échéance", "Montant", "Date limite", "Statut"]}>
-            {upcoming.map((i) => (
-              <tr key={i.id}>
-                <Td>{fullName(i.tutoring.child)}</Td>
-                <Td>{i.index}</Td>
-                <Td className="whitespace-nowrap">{formatFcfa(i.amount)}</Td>
-                <Td className="whitespace-nowrap">{formatDate(i.dueDate)}</Td>
-                <Td>
-                  <InstallmentBadge status={i.status} overdue={i.dueDate < now} />
-                </Td>
-              </tr>
-            ))}
-          </Table>
-        )}
-      </Card>
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
+        <Card title="Reversements" description="Montant payé par la famille, moins la commission Access.">
+          {payouts.length === 0 ? (
+            <EmptyState icon={Banknote} title="Aucun reversement pour l'instant" />
+          ) : (
+            <List>
+              {payouts.map((p) => (
+                <ListRow
+                  key={p.id}
+                  title={formatFcfa(p.netAmount)}
+                  meta={
+                    <>
+                      {fullName(p.installment.tutoring.child)} · échéance {p.installment.index}
+                      <span className="block text-xs text-slate-400">
+                        {formatFcfa(p.grossAmount)} payés − {formatFcfa(p.commissionAmount)} de commission
+                        {p.executedAt && ` · versé le ${formatDate(p.executedAt)}`}
+                      </span>
+                    </>
+                  }
+                  trailing={<PayoutBadge status={p.status} />}
+                />
+              ))}
+            </List>
+          )}
+        </Card>
+        <Card title="Échéances à venir" description="En attente de paiement par les parents.">
+          {upcoming.length === 0 ? (
+            <p className="text-sm text-slate-500">Aucune.</p>
+          ) : (
+            <List>
+              {upcoming.map((i) => (
+                <ListRow
+                  key={i.id}
+                  title={formatFcfa(i.amount)}
+                  meta={`${fullName(i.tutoring.child)} · avant le ${formatDate(i.dueDate)}`}
+                  trailing={<InstallmentBadge status={i.status} overdue={i.dueDate < now} />}
+                />
+              ))}
+            </List>
+          )}
+        </Card>
+      </div>
     </>
   );
 }

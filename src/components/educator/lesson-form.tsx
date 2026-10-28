@@ -5,6 +5,7 @@ import { TIME_SLOTS } from "@/lib/constants";
 import { todayIso } from "@/lib/format";
 import { addLessonAction } from "@/server/actions/educator";
 import type { ActionState } from "@/lib/validation";
+import { CircleAlert, CircleCheck, CloudOff, LoaderCircle } from "lucide-react";
 import { Button, cx } from "@/components/ui";
 
 const QUEUE_KEY = "access-lesson-queue";
@@ -111,25 +112,37 @@ export function LessonForm({ tutoringId, childName, minDate, maxDate }: { tutori
   const err = (name: string) => state.errors?.[name]?.[0];
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="space-y-4" noValidate>
+    <form ref={formRef} onSubmit={onSubmit} className="space-y-5" noValidate>
       {state.message && (
-        <p role="status" className={cx("rounded-lg px-3 py-2 text-sm", state.ok ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800")}>
+        <p
+          role="status"
+          className={cx(
+            "flex items-start gap-2.5 rounded-xl border px-3.5 py-3 text-sm",
+            state.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-800",
+          )}
+        >
+          {state.ok ? <CircleCheck className="mt-px size-4 shrink-0" aria-hidden /> : <CircleAlert className="mt-px size-4 shrink-0" aria-hidden />}
           {state.message}
         </p>
       )}
-      {queued.length > 0 && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{queued.length} séance(s) en attente d&apos;envoi.</p>}
+      {queued.length > 0 && (
+        <p className="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-900">
+          <CloudOff className="size-4 shrink-0" aria-hidden />
+          {queued.length} séance(s) en attente d&apos;envoi.
+        </p>
+      )}
       <input type="hidden" name="tutoringId" value={tutoringId} />
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label htmlFor="date" className="label">
-            Date <span className="text-red-600">*</span>
+            Date <span className="text-rose-500">*</span>
           </label>
           <input id="date" name="date" type="date" className="field" min={minDate} max={maxDate < todayIso() ? maxDate : todayIso()} defaultValue={maxDate < todayIso() ? maxDate : todayIso()} required />
-          {err("date") && <p className="mt-1 text-xs text-red-700">{err("date")}</p>}
+          {err("date") && <p className="mt-1.5 text-[13px] text-rose-600">{err("date")}</p>}
         </div>
         <div>
           <label htmlFor="slot" className="label">
-            Créneau <span className="text-red-600">*</span>
+            Créneau <span className="text-rose-500">*</span>
           </label>
           <select id="slot" name="slot" className="field" required>
             {Object.entries(TIME_SLOTS).map(([k, v]) => (
@@ -142,10 +155,10 @@ export function LessonForm({ tutoringId, childName, minDate, maxDate }: { tutori
       </div>
       <div>
         <label htmlFor="workDone" className="label">
-          Travail effectué <span className="text-red-600">*</span>
+          Travail effectué <span className="text-rose-500">*</span>
         </label>
         <textarea id="workDone" name="workDone" rows={4} className="field" required placeholder="Chapitres revus, exercices faits, devoirs donnés…" />
-        {err("workDone") && <p className="mt-1 text-xs text-red-700">{err("workDone")}</p>}
+        {err("workDone") && <p className="mt-1.5 text-[13px] text-rose-600">{err("workDone")}</p>}
       </div>
       <div>
         <label htmlFor="observation" className="label">
@@ -153,7 +166,8 @@ export function LessonForm({ tutoringId, childName, minDate, maxDate }: { tutori
         </label>
         <textarea id="observation" name="observation" rows={3} className="field" placeholder="Attitude, progrès, points à travailler…" />
       </div>
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending} size="lg" className="w-full">
+        {pending && <LoaderCircle className="animate-spin" aria-hidden />}
         {pending ? "Enregistrement…" : "Enregistrer la séance"}
       </Button>
     </form>

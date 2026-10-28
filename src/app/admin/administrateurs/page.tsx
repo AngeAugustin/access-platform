@@ -13,7 +13,7 @@ export default async function AdminsPage() {
     <>
       <PageHeader title="Administrateurs" subtitle="Les comptes administrateurs ne peuvent être créés qu'ici." />
       <Card title="Comptes" className="mb-5">
-        <Table head={["Nom", "E-mail", "Rôle", "Créé le", "Dernière connexion", "Compte"]}>
+        <Table bare head={["Nom", "E-mail", "Rôle", "Créé le", "Dernière connexion", "Compte"]}>
           {admins.map((a) => (
             <tr key={a.id}>
               <Td>{fullName(a)}</Td>

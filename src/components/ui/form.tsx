@@ -2,8 +2,9 @@
 
 import { createContext, startTransition, use, useActionState, useEffect, useRef } from "react";
 import type { ComponentProps, ReactNode } from "react";
+import { CircleAlert, CircleCheck, LoaderCircle } from "lucide-react";
 import type { ActionState } from "@/lib/validation";
-import { Button, type ButtonVariant, cx } from "./index";
+import { Button, type ButtonSize, type ButtonVariant, cx } from "./index";
 
 type FormContextValue = { state: ActionState; pending: boolean };
 const FormContext = createContext<FormContextValue>({ state: {}, pending: false });
@@ -59,6 +60,7 @@ export function ActionForm({
 export function SubmitButton({
   children,
   variant = "primary",
+  size = "md",
   className,
   pendingLabel,
   name,
@@ -66,6 +68,7 @@ export function SubmitButton({
 }: {
   children: ReactNode;
   variant?: ButtonVariant;
+  size?: ButtonSize;
   className?: string;
   pendingLabel?: string;
   name?: string;
@@ -73,7 +76,8 @@ export function SubmitButton({
 }) {
   const { pending } = useFormState();
   return (
-    <Button type="submit" variant={variant} disabled={pending} className={className} aria-busy={pending} name={name} value={value}>
+    <Button type="submit" variant={variant} size={size} disabled={pending} className={className} aria-busy={pending} name={name} value={value}>
+      {pending && <LoaderCircle className="animate-spin" aria-hidden />}
       {pending ? (pendingLabel ?? "Envoi…") : children}
     </Button>
   );
@@ -82,8 +86,16 @@ export function SubmitButton({
 export function FormMessage() {
   const { state } = useFormState();
   if (!state.message) return null;
+  const Icon = state.ok ? CircleCheck : CircleAlert;
   return (
-    <p role={state.ok ? "status" : "alert"} className={cx("rounded-lg px-3 py-2 text-sm", state.ok ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800")}>
+    <p
+      role={state.ok ? "status" : "alert"}
+      className={cx(
+        "flex animate-fade-in items-start gap-2.5 rounded-xl border px-3.5 py-3 text-sm",
+        state.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-800",
+      )}
+    >
+      <Icon className="mt-px size-4 shrink-0" aria-hidden />
       {state.message}
     </p>
   );
@@ -94,7 +106,7 @@ export function FieldError({ name }: { name: string }) {
   const errors = state.errors?.[name];
   if (!errors?.length) return null;
   return (
-    <p id={`${name}-error`} className="mt-1 text-xs text-red-700">
+    <p id={`${name}-error`} className="mt-1.5 text-[13px] text-rose-600">
       {errors[0]}
     </p>
   );
@@ -114,10 +126,10 @@ export function TextField({ label, name, hint, className, ...props }: FieldProps
     <div className={className}>
       <label htmlFor={id} className="label">
         {label}
-        {props.required && <span className="text-red-600"> *</span>}
+        {props.required && <span className="text-rose-500"> *</span>}
       </label>
       <input id={id} name={name} className="field" aria-invalid={invalid} aria-describedby={invalid ? `${name}-error` : undefined} {...props} />
-      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1.5 text-[13px] text-slate-500">{hint}</p>}
       <FieldError name={name} />
     </div>
   );
@@ -130,10 +142,10 @@ export function TextArea({ label, name, hint, className, ...props }: FieldProps 
     <div className={className}>
       <label htmlFor={id} className="label">
         {label}
-        {props.required && <span className="text-red-600"> *</span>}
+        {props.required && <span className="text-rose-500"> *</span>}
       </label>
       <textarea id={id} name={name} rows={4} className="field" aria-invalid={invalid} {...props} />
-      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1.5 text-[13px] text-slate-500">{hint}</p>}
       <FieldError name={name} />
     </div>
   );
@@ -154,7 +166,7 @@ export function SelectField({
     <div className={className}>
       <label htmlFor={id} className="label">
         {label}
-        {props.required && <span className="text-red-600"> *</span>}
+        {props.required && <span className="text-rose-500"> *</span>}
       </label>
       <select id={id} name={name} className="field" aria-invalid={invalid} {...props}>
         {placeholder !== undefined && <option value="">{placeholder}</option>}
@@ -164,7 +176,7 @@ export function SelectField({
           </option>
         ))}
       </select>
-      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1.5 text-[13px] text-slate-500">{hint}</p>}
       <FieldError name={name} />
     </div>
   );

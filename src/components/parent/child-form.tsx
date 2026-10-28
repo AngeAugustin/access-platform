@@ -29,19 +29,19 @@ export function ChildForm({ defaults = {} }: { defaults?: ChildDefaults }) {
   const subjects = subjectsForClass(currentClass);
 
   return (
-    <ActionForm action={saveChildAction} className="space-y-6">
+    <ActionForm action={saveChildAction} className="space-y-8">
       <FormMessage />
       {defaults.id && <input type="hidden" name="childId" value={defaults.id} />}
-      <fieldset className="grid gap-4 sm:grid-cols-2">
-        <legend className="mb-2 text-base font-semibold">Identité</legend>
+      <fieldset className="grid grid-cols-1 gap-4 border-b border-slate-100 pb-8 sm:grid-cols-2">
+        <legend className="col-span-full mb-1 text-[15px] font-semibold text-ink">Identité</legend>
         <TextField label="Prénom" name="firstName" defaultValue={defaults.firstName} required />
         <TextField label="Nom" name="lastName" defaultValue={defaults.lastName} required />
         <SelectField label="Sexe" name="sex" defaultValue={defaults.sex ?? ""} required placeholder="Choisir…" options={[["F", "Fille"], ["M", "Garçon"]]} />
         <TextField label="Date de naissance" name="birthDate" type="date" defaultValue={defaults.birthDate} required />
         <TextField label="NPI de l'enfant" name="npi" inputMode="numeric" maxLength={10} defaultValue={defaults.npi} hint="Facultatif." />
       </fieldset>
-      <fieldset className="grid gap-4 sm:grid-cols-2">
-        <legend className="mb-2 text-base font-semibold">Scolarité</legend>
+      <fieldset className="grid grid-cols-1 gap-4 border-b border-slate-100 pb-8 sm:grid-cols-2">
+        <legend className="col-span-full mb-1 text-[15px] font-semibold text-ink">Scolarité</legend>
         <SelectField
           label="Classe actuelle"
           name="currentClass"
@@ -59,16 +59,18 @@ export function ChildForm({ defaults = {} }: { defaults?: ChildDefaults }) {
       </fieldset>
       {subjects.length > 0 && (
         <fieldset>
-          <legend className="mb-1 text-base font-semibold">Niveau par matière</legend>
-          <p className="mb-3 text-sm text-slate-600">Ces informations aident l&apos;éducateur à préparer ses séances.</p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <legend className="text-[15px] font-semibold text-ink">Niveau par matière</legend>
+          <p className="mt-1 mb-4 text-sm text-slate-500">Ces informations aident l&apos;éducateur à préparer ses séances.</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {subjects.map((s) => (
               <SelectField key={s} label={SUBJECTS[s]} name={`level_${s}`} required placeholder="Choisir…" options={levelOptions} defaultValue={defaults.levels?.[s] ?? ""} />
             ))}
           </div>
         </fieldset>
       )}
-      <SubmitButton>{defaults.id ? "Enregistrer les modifications" : "Inscrire l'enfant"}</SubmitButton>
+      <div className="flex justify-end border-t border-slate-100 pt-6">
+        <SubmitButton size="lg">{defaults.id ? "Enregistrer les modifications" : "Inscrire l'enfant"}</SubmitButton>
+      </div>
     </ActionForm>
   );
 }

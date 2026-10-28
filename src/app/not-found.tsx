@@ -1,13 +1,11 @@
-import Link from "next/link";
+import { Compass } from "lucide-react";
+import { LinkButton } from "@/components/ui";
+import { StatusPage } from "@/components/status-page";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto max-w-md px-4 py-20 text-center">
-      <p className="text-5xl font-bold text-brand-600">404</p>
-      <h1 className="mt-2 text-xl font-semibold">Page introuvable</h1>
-      <Link href="/" className="mt-6 inline-block font-semibold text-brand-700 hover:underline">
-        Revenir à l&apos;accueil
-      </Link>
-    </div>
+    <StatusPage icon={Compass} code="Erreur 404" title="Page introuvable" action={<LinkButton href="/">Revenir à l&apos;accueil</LinkButton>}>
+      Le lien est peut-être incorrect, ou la page a été déplacée.
+    </StatusPage>
   );
 }

@@ -35,8 +35,8 @@ export function TutoringRequestForm({
 
   if (children.length === 0) {
     return (
-      <p className="text-sm text-slate-600">
-        <Link href="/parent/enfants/nouveau" className="font-semibold text-brand-700 underline">
+      <p className="text-sm text-slate-500">
+        <Link href="/parent/enfants/nouveau" className="font-semibold text-brand-700 hover:text-brand-800">
           Inscrivez d&apos;abord votre enfant
         </Link>{" "}
         pour demander un tutorat.
@@ -44,10 +44,10 @@ export function TutoringRequestForm({
     );
   }
   if (eligible.length === 0) {
-    return <p className="text-sm text-slate-600">Cet éducateur n&apos;intervient dans aucune des classes de vos enfants.</p>;
+    return <p className="text-sm text-slate-500">Cet éducateur n&apos;intervient dans aucune des classes de vos enfants.</p>;
   }
   if (freeSlots.length === 0) {
-    return <p className="text-sm text-slate-600">Tous les créneaux de cet éducateur sont déjà réservés.</p>;
+    return <p className="text-sm text-slate-500">Tous les créneaux de cet éducateur sont déjà réservés.</p>;
   }
 
   const child = eligible.find((c) => c.id === childId);
@@ -56,7 +56,7 @@ export function TutoringRequestForm({
   const total = tariff ? amountForWeeks(tariff, weeks) : 0;
 
   return (
-    <ActionForm action={createTutoringAction} className="space-y-4">
+    <ActionForm action={createTutoringAction} className="space-y-5">
       <FormMessage />
       <input type="hidden" name="educatorId" value={educatorId} />
       <SelectField label="Enfant" name="childId" required value={childId} onChange={(e) => setChildId(e.target.value)} options={eligible.map((c) => [c.id, `${c.name} (${c.classLevel})`] as const)} />
@@ -75,11 +75,11 @@ export function TutoringRequestForm({
       </div>
       <fieldset>
         <legend className="label">
-          Créneaux hebdomadaires {tariff && <span className="font-normal text-slate-500">({tariff.sessionsPerWeek} à choisir)</span>}
+          Créneaux par semaine {tariff && <span className="font-normal text-slate-500">· {tariff.sessionsPerWeek} à choisir</span>}
         </legend>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
           {freeSlots.map((s) => (
-            <label key={`${s.day}|${s.slot}`} className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+            <label key={`${s.day}|${s.slot}`} className="choice">
               <input type="checkbox" name="slots" value={`${s.day}|${s.slot}`} />
               {WEEKDAYS[s.day]} {TIME_SLOTS[s.slot]}
             </label>
@@ -88,21 +88,37 @@ export function TutoringRequestForm({
         <FieldError name="slots" />
       </fieldset>
       {tariff ? (
-        <div className="rounded-lg bg-slate-50 p-3 text-sm">
-          <p>
-            {tariff.sessionsPerWeek} séance(s) de {tariff.hoursPerSession} h par semaine à {formatFcfa(tariff.hourlyRate)}/h.
-          </p>
-          <p className="mt-1">
-            <strong>{formatFcfa(perPeriod)}</strong> toutes les {weeksPerInstallment} semaines · total <strong>{formatFcfa(total)}</strong>
-          </p>
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-sm text-slate-500">Total sur {weeks} semaine{weeks > 1 ? "s" : ""}</span>
+            <span className="text-xl font-semibold tracking-tight text-ink tabular-nums">{formatFcfa(total)}</span>
+          </div>
+          <div className="mt-3 space-y-1.5 border-t border-slate-200/70 pt-3 text-[13px] text-slate-500">
+            <p className="flex justify-between gap-3">
+              <span>Rythme</span>
+              <span className="text-slate-700">
+                {tariff.sessionsPerWeek} × {tariff.hoursPerSession} h / semaine
+              </span>
+            </p>
+            <p className="flex justify-between gap-3">
+              <span>Tarif horaire</span>
+              <span className="text-slate-700">{formatFcfa(tariff.hourlyRate)}</span>
+            </p>
+            <p className="flex justify-between gap-3">
+              <span>Échéance</span>
+              <span className="text-slate-700">
+                {formatFcfa(perPeriod)} / {weeksPerInstallment} sem.
+              </span>
+            </p>
+          </div>
         </div>
       ) : (
-        <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Le tarif de cette classe n&apos;est pas encore défini par Access.</p>
+        <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Le tarif de cette classe n&apos;est pas encore défini par Access.</p>
       )}
-      <SubmitButton className="w-full" pendingLabel="Création du tutorat…">
+      <SubmitButton className="w-full" size="lg" pendingLabel="Création du tutorat…">
         Confirmer le tutorat
       </SubmitButton>
-      <p className="text-xs text-slate-500">L&apos;éducateur est prévenu immédiatement. Vous pouvez arrêter le tutorat à tout moment.</p>
+      <p className="text-center text-xs text-slate-400">L&apos;éducateur est prévenu immédiatement. Vous pouvez arrêter le tutorat à tout moment.</p>
     </ActionForm>
   );
 }

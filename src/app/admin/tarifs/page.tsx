@@ -5,7 +5,7 @@ import { formatFcfa } from "@/lib/format";
 import { amountForWeeks } from "@/lib/billing";
 import { getSettings } from "@/server/services/settings";
 import { Card, PageHeader } from "@/components/ui";
-import { SettingsForm, TariffForm } from "@/components/admin/forms";
+import { SettingsForm, TariffForm, TariffRow } from "@/components/admin/forms";
 
 export const metadata = { title: "Tarifs et paramètres" };
 
@@ -33,13 +33,18 @@ export default async function TariffsPage() {
           <TariffForm classes={missing} />
         </Card>
       )}
-      <Card title="Grille tarifaire">
-        <div className="space-y-4">
+      <Card title="Grille tarifaire" description={`Montant d'une échéance = heures × séances × ${settings.weeksPerInstallment} semaines × tarif horaire.`}>
+        <div className="hidden grid-cols-[110px_1fr_1fr_1fr_140px_auto] gap-2.5 border-b border-slate-200 pb-2.5 text-xs font-medium text-slate-500 sm:grid">
+          <span>Classe</span>
+          <span>Tarif horaire (FCFA)</span>
+          <span>Séances / semaine</span>
+          <span>Heures / séance</span>
+          <span>Par échéance</span>
+          <span className="w-[92px]" />
+        </div>
+        <div className="divide-y divide-slate-100">
           {ordered.map((t) => (
-            <div key={t.id} className="border-b border-slate-100 pb-4 last:border-0">
-              <TariffForm classes={[]} defaults={t} />
-              <p className="mt-1 text-xs text-slate-500">Soit {formatFcfa(amountForWeeks(t, settings.weeksPerInstallment))} par échéance de {settings.weeksPerInstallment} semaines.</p>
-            </div>
+            <TariffRow key={t.id} tariff={t} perInstallment={formatFcfa(amountForWeeks(t, settings.weeksPerInstallment))} />
           ))}
         </div>
       </Card>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GraduationCap } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { PROFILE_STATUS } from "@/lib/constants";
@@ -6,6 +7,7 @@ import { formatDate, fullName } from "@/lib/format";
 import { Badge, EmptyState, PageHeader, Stars, Table, Td } from "@/components/ui";
 import { ProfileBadge } from "@/components/status";
 import { SearchBar, userSearch } from "@/components/admin/search-bar";
+import { Avatar } from "@/components/avatar";
 
 export const metadata = { title: "Éducateurs" };
 
@@ -24,9 +26,9 @@ export default async function AdminEducatorsPage({ searchParams }: { searchParam
 
   return (
     <>
-      <PageHeader title="Éducateurs" subtitle="Les dossiers transmis sont en tête de liste." />
+      <PageHeader title="Éducateurs" subtitle="Les dossiers transmis apparaissent en tête de liste." />
       <SearchBar q={q} placeholder="Nom, e-mail, téléphone, NPI">
-        <select name="statut" defaultValue={statut ?? ""} className="field max-w-52" aria-label="Statut">
+        <select name="statut" defaultValue={statut ?? ""} className="field w-auto min-w-48" aria-label="Statut">
           <option value="">Tous les statuts</option>
           {Object.entries(PROFILE_STATUS).map(([k, v]) => (
             <option key={k} value={k}>
@@ -36,16 +38,19 @@ export default async function AdminEducatorsPage({ searchParams }: { searchParam
         </select>
       </SearchBar>
       {educators.length === 0 ? (
-        <EmptyState title="Aucun éducateur." />
+        <EmptyState icon={GraduationCap} title="Aucun éducateur" />
       ) : (
         <Table head={["Nom", "Zone", "Dossier", "Note", "Créneaux pris", "Transmis le", "Compte"]}>
           {educators.map((e) => (
             <tr key={e.id} className="hover:bg-slate-50">
               <Td>
-                <Link href={`/admin/educateurs/${e.id}`} className="font-medium text-brand-700 hover:underline">
-                  {fullName(e.user)}
+                <Link href={`/admin/educateurs/${e.id}`} className="flex items-center gap-3">
+                  <Avatar name={fullName(e.user)} size={34} />
+                  <span>
+                    <span className="block font-medium text-ink hover:text-brand-700">{fullName(e.user)}</span>
+                    <span className="block text-xs text-slate-500">{e.user.email}</span>
+                  </span>
                 </Link>
-                <span className="block text-xs text-slate-500">{e.user.email}</span>
               </Td>
               <Td>{e.zone ?? "—"}</Td>
               <Td>

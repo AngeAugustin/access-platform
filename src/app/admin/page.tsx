@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { BookOpenCheck, CalendarX, ChevronRight, FolderSearch, GraduationCap, HandCoins, MessageSquareWarning, Scale, Smile, Users } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { formatFcfa } from "@/lib/format";
-import { Card, PageHeader, Stat } from "@/components/ui";
+import { Card, IconTile, PageHeader, Stat, cx } from "@/components/ui";
 import { MonthlyBars } from "@/components/admin/bar-chart";
 
 export const metadata = { title: "Tableau de bord" };
@@ -46,44 +47,49 @@ export default async function AdminDashboard() {
   const commissionTotal = revenue.reduce((s, r) => s + Number(r.commission), 0);
 
   const todo = [
-    [toValidate, "dossier(s) éducateur à valider", "/admin/educateurs?statut=SUBMITTED"],
-    [payoutsPending._count, `reversement(s) à effectuer (${formatFcfa(payoutsPending._sum.netAmount ?? 0)})`, "/admin/paiements"],
-    [openComplaints, "réclamation(s) à traiter", "/admin/reclamations"],
-    [disputed, "séance(s) contestée(s)", "/admin/tutorats?contestees=1"],
-    [overdue._count, `échéance(s) en retard (${formatFcfa(overdue._sum.amount ?? 0)})`, "/admin/paiements#retards"],
-  ] as const;
+    { n: toValidate, label: "Dossiers à valider", hint: "Éducateurs en attente", href: "/admin/educateurs?statut=SUBMITTED", icon: FolderSearch },
+    { n: payoutsPending._count, label: "Reversements à faire", hint: formatFcfa(payoutsPending._sum.netAmount ?? 0), href: "/admin/paiements", icon: HandCoins },
+    { n: openComplaints, label: "Réclamations ouvertes", hint: "À traiter", href: "/admin/reclamations", icon: MessageSquareWarning },
+    { n: disputed, label: "Séances contestées", hint: "À arbitrer", href: "/admin/tutorats?contestees=1", icon: Scale },
+    { n: overdue._count, label: "Échéances en retard", hint: formatFcfa(overdue._sum.amount ?? 0), href: "/admin/paiements#retards", icon: CalendarX },
+  ];
+  const pendingCount = todo.reduce((s, t) => s + t.n, 0);
 
   return (
     <>
-      <PageHeader title="Tableau de bord" />
-      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Parents" value={parents} href="/admin/parents" />
-        <Stat label="Éducateurs vérifiés" value={educators} href="/admin/educateurs" />
-        <Stat label="Élèves inscrits" value={children} href="/admin/eleves" />
-        <Stat label="Tutorats en cours" value={activeTutorings} href="/admin/tutorats" />
+      <PageHeader eyebrow="Vue d'ensemble" title="Tableau de bord" subtitle={pendingCount ? `${pendingCount} élément${pendingCount > 1 ? "s demandent" : " demande"} votre attention.` : "Rien en attente."} />
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <Stat label="Parents" value={parents} icon={Users} href="/admin/parents" />
+        <Stat label="Éducateurs vérifiés" value={educators} icon={GraduationCap} href="/admin/educateurs" tone="green" />
+        <Stat label="Élèves inscrits" value={children} icon={Smile} href="/admin/eleves" tone="amber" />
+        <Stat label="Tutorats en cours" value={activeTutorings} icon={BookOpenCheck} href="/admin/tutorats" tone="slate" />
       </div>
-      <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
-        <Card title="À traiter">
-          <ul className="space-y-2">
-            {todo.map(([n, label, href]) => (
-              <li key={href}>
-                <Link href={href} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${n ? "bg-amber-50 text-amber-900 hover:bg-amber-100" : "text-slate-500"}`}>
-                  <span className="min-w-6 text-lg font-bold">{n}</span>
-                  {label}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_1fr]">
+        <Card title="À traiter" padded={false}>
+          <ul className="divide-y divide-slate-100">
+            {todo.map((t) => (
+              <li key={t.href}>
+                <Link href={t.href} className="group flex items-center gap-3.5 px-5 py-3.5 transition hover:bg-slate-50 sm:px-6">
+                  <IconTile icon={t.icon} size="sm" tone={t.n ? "amber" : "slate"} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium text-ink">{t.label}</span>
+                    <span className="block text-xs text-slate-500">{t.hint}</span>
+                  </span>
+                  <span className={cx("min-w-7 rounded-full px-2 py-0.5 text-center text-sm font-semibold tabular-nums", t.n ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-400")}>{t.n}</span>
+                  <ChevronRight className="size-4 text-slate-300 transition group-hover:text-brand-500" aria-hidden />
                 </Link>
               </li>
             ))}
           </ul>
         </Card>
-        <Card>
-          <MonthlyBars title="Encaissements par mois (FCFA)" data={revenueSeries} format={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))} />
-          <p className="mt-3 text-xs text-slate-500">Commission Access sur la période : {formatFcfa(commissionTotal)}</p>
+        <Card title="Encaissements" description={`Six derniers mois · commission Access ${formatFcfa(commissionTotal)}`}>
+          <MonthlyBars data={revenueSeries} format={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))} />
         </Card>
-        <Card>
-          <MonthlyBars title="Inscriptions de parents" data={signupSeries("PARENT")} />
+        <Card title="Inscriptions de parents" description="Six derniers mois">
+          <MonthlyBars data={signupSeries("PARENT")} />
         </Card>
-        <Card>
-          <MonthlyBars title="Inscriptions d'éducateurs" data={signupSeries("EDUCATOR")} />
+        <Card title="Inscriptions d'éducateurs" description="Six derniers mois">
+          <MonthlyBars data={signupSeries("EDUCATOR")} />
         </Card>
       </div>
     </>

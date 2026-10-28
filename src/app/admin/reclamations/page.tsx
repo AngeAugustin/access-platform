@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessagesSquare } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { COMPLAINT_STATUS, ROLE_LABELS } from "@/lib/constants";
@@ -17,7 +18,7 @@ export default async function AdminComplaintsPage() {
     <>
       <PageHeader title="Réclamations" subtitle="Les réclamations ouvertes sont en tête de liste." />
       {complaints.length === 0 ? (
-        <EmptyState title="Aucune réclamation." />
+        <EmptyState icon={MessagesSquare} title="Aucune réclamation" />
       ) : (
         <Table head={["Date", "Demandeur", "Motif", "Statut"]}>
           {complaints.map((c) => (
@@ -27,7 +28,7 @@ export default async function AdminComplaintsPage() {
                 {fullName(c.author)} <span className="text-xs text-slate-500">({ROLE_LABELS[c.author.role]})</span>
               </Td>
               <Td>
-                <Link href={`/admin/reclamations/${c.id}`} className="text-brand-700 hover:underline">
+                <Link href={`/admin/reclamations/${c.id}`} className="font-medium text-brand-700 hover:text-brand-800">
                   {c.subject}
                 </Link>
               </Td>

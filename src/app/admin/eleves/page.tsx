@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Smile } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { CLASS_LEVELS } from "@/lib/constants";
@@ -27,7 +28,7 @@ export default async function AdminChildrenPage({ searchParams }: { searchParams
     <>
       <PageHeader title="Élèves" subtitle={`${children.length} résultat(s)`} />
       <SearchBar q={q} placeholder="Nom, école">
-        <select name="classe" defaultValue={classe ?? ""} className="field max-w-40" aria-label="Classe">
+        <select name="classe" defaultValue={classe ?? ""} className="field w-auto min-w-40" aria-label="Classe">
           <option value="">Toutes les classes</option>
           {CLASS_LEVELS.map((c) => (
             <option key={c}>{c}</option>
@@ -35,7 +36,7 @@ export default async function AdminChildrenPage({ searchParams }: { searchParams
         </select>
       </SearchBar>
       {children.length === 0 ? (
-        <EmptyState title="Aucun élève." />
+        <EmptyState icon={Smile} title="Aucun élève" />
       ) : (
         <Table head={["Élève", "Classe", "École", "Parent", "Tutorats en cours", "Inscrit le"]}>
           {children.map((c) => (
@@ -44,7 +45,7 @@ export default async function AdminChildrenPage({ searchParams }: { searchParams
               <Td>{c.currentClass}</Td>
               <Td>{c.currentSchool ?? "—"}</Td>
               <Td>
-                <Link href={`/admin/parents/${c.parentId}`} className="text-brand-700 hover:underline">
+                <Link href={`/admin/parents/${c.parentId}`} className="font-medium text-brand-700 hover:text-brand-800">
                   {fullName(c.parent)}
                 </Link>
               </Td>

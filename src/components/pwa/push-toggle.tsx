@@ -30,9 +30,9 @@ export function PushToggle({ vapidPublicKey }: { vapidPublicKey: string | undefi
 
   if (!supported) {
     return (
-      <p className="text-sm text-slate-600">
-        Les notifications sur cet appareil ne sont pas disponibles. Sur iPhone, installez d&apos;abord Access sur l&apos;écran d&apos;accueil.
-        Vous recevez quand même les messages importants par e-mail.
+      <p className="text-sm leading-relaxed text-slate-500">
+        Les alertes ne sont pas disponibles sur cet appareil. Sur iPhone, installez d&apos;abord Access sur l&apos;écran d&apos;accueil. Les messages
+        importants vous sont aussi envoyés par e-mail.
       </p>
     );
   }
@@ -65,18 +65,18 @@ export function PushToggle({ vapidPublicKey }: { vapidPublicKey: string | undefi
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <p className="text-sm text-slate-700">{subscription ? "Notifications activées sur cet appareil." : "Recevez une alerte sur ce téléphone à chaque événement important."}</p>
+    <div className="space-y-3">
+      <p className="text-sm leading-relaxed text-slate-500">{subscription ? "Les alertes sont activées sur cet appareil." : "Recevez une alerte sur ce téléphone à chaque événement important."}</p>
       {subscription ? (
-        <Button variant="secondary" onClick={disable} disabled={busy}>
+        <Button variant="secondary" className="w-full" onClick={disable} disabled={busy}>
           Désactiver
         </Button>
       ) : (
-        <Button onClick={enable} disabled={busy}>
+        <Button className="w-full" onClick={enable} disabled={busy}>
           Activer les notifications
         </Button>
       )}
-      {error && <p className="w-full text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-rose-600">{error}</p>}
     </div>
   );
 }

@@ -1,13 +1,21 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { GraduationCap, Pencil } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { SUBJECTS, SUBJECT_LEVELS, type SubjectKey } from "@/lib/constants";
 import { formatDate, fullName } from "@/lib/format";
-import { Card, DefinitionList, LinkButton, PageHeader } from "@/components/ui";
+import { Card, DefinitionList, LinkButton, List, ListRow, PageHeader, cx } from "@/components/ui";
+import { Avatar } from "@/components/avatar";
 import { TutoringBadge } from "@/components/status";
 
 export const metadata = { title: "Fiche enfant" };
+
+const levelStyle = {
+  WEAK: { width: "w-1/4", bar: "bg-rose-400" },
+  AVERAGE: { width: "w-2/4", bar: "bg-amber-400" },
+  GOOD: { width: "w-3/4", bar: "bg-brand-500" },
+  VERY_GOOD: { width: "w-full", bar: "bg-emerald-500" },
+} as const;
 
 export default async function ChildPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireRole("PARENT");
@@ -24,19 +32,41 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
   return (
     <>
       <PageHeader
-        title={fullName(child)}
-        subtitle={`${child.currentClass}${child.currentSchool ? ` · ${child.currentSchool}` : ""}`}
         back="/parent/enfants"
+        title={
+          <span className="flex items-center gap-3">
+            <Avatar name={fullName(child)} size={44} />
+            {fullName(child)}
+          </span>
+        }
+        subtitle={`${child.currentClass}${child.currentSchool ? ` · ${child.currentSchool}` : ""}`}
         action={
-          <div className="flex gap-2">
+          <>
             <LinkButton href={`/parent/enfants/${child.id}/modifier`} variant="secondary">
-              Modifier
+              <Pencil aria-hidden /> Modifier
             </LinkButton>
-            <LinkButton href={`/parent/educateurs?classe=${encodeURIComponent(child.currentClass)}&enfant=${child.id}`}>Trouver un éducateur</LinkButton>
-          </div>
+            <LinkButton href={`/parent/educateurs?classe=${encodeURIComponent(child.currentClass)}&enfant=${child.id}`}>
+              <GraduationCap aria-hidden /> Trouver un éducateur
+            </LinkButton>
+          </>
         }
       />
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card title="Niveau par matière" description="Renseigné par vous, partagé avec l'éducateur.">
+          <ul className="space-y-3.5">
+            {child.subjectLevels.map((l) => (
+              <li key={l.id}>
+                <div className="mb-1.5 flex justify-between text-sm">
+                  <span className="text-slate-700">{SUBJECTS[l.subject as SubjectKey] ?? l.subject}</span>
+                  <span className="font-medium text-ink">{SUBJECT_LEVELS[l.level]}</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className={cx("h-full rounded-full", levelStyle[l.level].width, levelStyle[l.level].bar)} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
         <Card title="Informations">
           <DefinitionList
             items={[
@@ -50,32 +80,22 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
             ]}
           />
         </Card>
-        <Card title="Niveau par matière">
-          <ul className="grid grid-cols-2 gap-2 text-sm">
-            {child.subjectLevels.map((l) => (
-              <li key={l.id} className="flex justify-between gap-2 rounded-lg bg-slate-50 px-3 py-1.5">
-                <span>{SUBJECTS[l.subject as SubjectKey] ?? l.subject}</span>
-                <span className="font-medium">{SUBJECT_LEVELS[l.level]}</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
         <Card title="Tutorats" className="lg:col-span-2">
           {child.tutorings.length === 0 ? (
-            <p className="text-sm text-slate-600">Aucun tutorat pour l&apos;instant.</p>
+            <p className="text-sm text-slate-500">Aucun tutorat pour l&apos;instant.</p>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <List>
               {child.tutorings.map((t) => (
-                <li key={t.id} className="py-2">
-                  <Link href={`/parent/tutorats/${t.id}`} className="flex items-center justify-between gap-3 hover:text-brand-700">
-                    <span className="text-sm">
-                      <span className="font-medium">{fullName(t.educator.user)}</span> · {formatDate(t.startDate)} → {formatDate(t.endDate)}
-                    </span>
-                    <TutoringBadge status={t.status} />
-                  </Link>
-                </li>
+                <ListRow
+                  key={t.id}
+                  href={`/parent/tutorats/${t.id}`}
+                  leading={<Avatar name={fullName(t.educator.user)} size={36} />}
+                  title={fullName(t.educator.user)}
+                  meta={`${formatDate(t.startDate)} → ${formatDate(t.endDate)}`}
+                  trailing={<TutoringBadge status={t.status} />}
+                />
               ))}
-            </ul>
+            </List>
           )}
         </Card>
       </div>

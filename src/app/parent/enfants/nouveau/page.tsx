@@ -8,7 +8,7 @@ export default async function NewChildPage() {
   await requireRole("PARENT");
   return (
     <>
-      <PageHeader title="Inscrire un enfant" back="/parent/enfants" />
+      <PageHeader title="Inscrire un enfant" subtitle="Ces informations restent privées : seul l'éducateur choisi y a accès." back="/parent/enfants" />
       <Card>
         <ChildForm />
       </Card>

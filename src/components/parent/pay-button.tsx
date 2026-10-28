@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { LoaderCircle, Smartphone } from "lucide-react";
 import { payInstallmentAction } from "@/server/actions/parent";
 import { Button } from "@/components/ui";
 
@@ -10,7 +11,7 @@ export function PayButton({ installmentId, label = "Payer" }: { installmentId: s
   return (
     <div>
       <Button
-        className="px-3 py-1.5 text-xs"
+        size="sm"
         disabled={pending}
         onClick={() =>
           start(async () => {
@@ -21,9 +22,10 @@ export function PayButton({ installmentId, label = "Payer" }: { installmentId: s
           })
         }
       >
+        {pending ? <LoaderCircle className="animate-spin" aria-hidden /> : <Smartphone aria-hidden />}
         {pending ? "Redirection…" : label}
       </Button>
-      {error && <p className="mt-1 text-xs text-red-700">{error}</p>}
+      {error && <p className="mt-1.5 max-w-48 text-xs text-rose-600">{error}</p>}
     </div>
   );
 }

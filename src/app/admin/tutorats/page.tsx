@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BookOpenCheck } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { TUTORING_STATUS } from "@/lib/constants";
@@ -28,7 +29,7 @@ export default async function AdminTutoringsPage({ searchParams }: { searchParam
     <>
       <PageHeader title="Tutorats" />
       <form method="get" className="mb-4 flex flex-wrap gap-2">
-        <select name="statut" defaultValue={statut ?? ""} className="field max-w-48" aria-label="Statut">
+        <select name="statut" defaultValue={statut ?? ""} className="field w-auto min-w-48" aria-label="Statut">
           <option value="">Tous les statuts</option>
           {Object.entries(TUTORING_STATUS).map(([k, v]) => (
             <option key={k} value={k}>
@@ -42,13 +43,13 @@ export default async function AdminTutoringsPage({ searchParams }: { searchParam
         <button className={buttonClass("secondary")}>Filtrer</button>
       </form>
       {tutorings.length === 0 ? (
-        <EmptyState title="Aucun tutorat." />
+        <EmptyState icon={BookOpenCheck} title="Aucun tutorat" />
       ) : (
         <Table head={["Réf.", "Élève", "Parent", "Éducateur", "Période", "Séances", "Statut"]}>
           {tutorings.map((t) => (
             <tr key={t.id} className="hover:bg-slate-50">
               <Td>
-                <Link href={`/admin/tutorats/${t.id}`} className="font-mono text-xs text-brand-700 hover:underline">
+                <Link href={`/admin/tutorats/${t.id}`} className="font-mono text-xs font-medium text-brand-700 hover:text-brand-800">
                   {t.reference}
                 </Link>
               </Td>
@@ -62,7 +63,7 @@ export default async function AdminTutoringsPage({ searchParams }: { searchParam
               </Td>
               <Td>
                 {t._count.lessons}
-                {t.lessons.length > 0 && <span className="ml-1 text-xs font-semibold text-red-700">({t.lessons.length} contestée)</span>}
+                {t.lessons.length > 0 && <span className="ml-1 text-xs font-semibold text-rose-700">({t.lessons.length} contestée)</span>}
               </Td>
               <Td>
                 <TutoringBadge status={t.status} />

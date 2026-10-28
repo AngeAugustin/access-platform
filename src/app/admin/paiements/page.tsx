@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CalendarX, CircleCheck, HandCoins, Wallet } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { formatDate, formatDateTime, formatFcfa, fullName } from "@/lib/format";
@@ -40,22 +41,22 @@ export default async function AdminPaymentsPage() {
 
   return (
     <>
-      <PageHeader title="Paiements" />
-      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <Stat label="Reversements à effectuer" value={formatFcfa(toPay.reduce((s, p) => s + p.netAmount, 0))} hint={`${toPay.length} reversement(s)`} />
-        <Stat label="Échéances en retard" value={formatFcfa(overdue.reduce((s, i) => s + i.amount, 0))} hint={`${overdue.length} échéance(s)`} />
-        <Stat label="Encaissé (50 derniers)" value={formatFcfa(payments.reduce((s, p) => s + p.amount, 0))} />
+      <PageHeader title="Paiements" subtitle="Encaissements des familles et reversements aux éducateurs." />
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 [&>:last-child:nth-child(odd)]:col-span-2 lg:[&>:last-child:nth-child(odd)]:col-span-1">
+        <Stat label="Reversements à effectuer" value={formatFcfa(toPay.reduce((s, p) => s + p.netAmount, 0))} hint={`${toPay.length} reversement(s)`} icon={HandCoins} />
+        <Stat label="Échéances en retard" value={formatFcfa(overdue.reduce((s, i) => s + i.amount, 0))} hint={`${overdue.length} échéance(s)`} icon={CalendarX} tone={overdue.length ? "rose" : "slate"} />
+        <Stat label="Encaissé (50 derniers)" value={formatFcfa(payments.reduce((s, p) => s + p.amount, 0))} icon={Wallet} tone="green" />
       </div>
 
       <Card title="Reversements aux éducateurs" className="mb-5">
         {toPay.length === 0 ? (
-          <EmptyState title="Aucun reversement en attente." />
+          <EmptyState icon={CircleCheck} title="Aucun reversement en attente" />
         ) : (
-          <Table head={["Éducateur", "Élève · échéance", "Payé", "Commission", "À reverser", "Mobile Money", "Statut", "Action"]}>
+          <Table bare head={["Éducateur", "Élève · échéance", "Payé", "Commission", "À reverser", "Mobile Money", "Statut", "Action"]}>
             {toPay.map((p) => (
               <tr key={p.id}>
                 <Td>
-                  <Link href={`/admin/educateurs/${p.educatorId}`} className="text-brand-700 hover:underline">
+                  <Link href={`/admin/educateurs/${p.educatorId}`} className="font-medium text-brand-700 hover:text-brand-800">
                     {fullName(p.educator.user)}
                   </Link>
                 </Td>
@@ -68,7 +69,7 @@ export default async function AdminPaymentsPage() {
                 <Td>{p.educator.payoutPhone ?? "—"}</Td>
                 <Td>
                   <PayoutBadge status={p.status} />
-                  {p.failureReason && <span className="block text-xs text-red-700">{p.failureReason}</span>}
+                  {p.failureReason && <span className="block text-xs text-rose-700">{p.failureReason}</span>}
                 </Td>
                 <Td>{p.status !== "PROCESSING" && <PayoutForms payoutId={p.id} fedapay={fedapay} />}</Td>
               </tr>
@@ -80,13 +81,13 @@ export default async function AdminPaymentsPage() {
       <Card title="Échéances en retard" className="mb-5">
         <div id="retards" />
         {overdue.length === 0 ? (
-          <p className="text-sm text-slate-600">Aucune.</p>
+          <p className="text-sm text-slate-500">Aucune.</p>
         ) : (
-          <Table head={["Parent", "Élève", "Montant", "Date limite", "Relancé le"]}>
+          <Table bare head={["Parent", "Élève", "Montant", "Date limite", "Relancé le"]}>
             {overdue.map((i) => (
               <tr key={i.id}>
                 <Td>
-                  <Link href={`/admin/parents/${i.tutoring.parentId}`} className="text-brand-700 hover:underline">
+                  <Link href={`/admin/parents/${i.tutoring.parentId}`} className="font-medium text-brand-700 hover:text-brand-800">
                     {fullName(i.tutoring.parent)}
                   </Link>
                   <span className="block text-xs text-slate-500">{i.tutoring.parent.phone}</span>
@@ -101,9 +102,9 @@ export default async function AdminPaymentsPage() {
         )}
       </Card>
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6">
         <Card title="Derniers encaissements">
-          <Table head={["Date", "Parent", "Élève", "Montant", "Transaction"]}>
+          <Table bare head={["Date", "Parent", "Élève", "Montant", "Transaction"]}>
             {payments.map((p) => (
               <tr key={p.id}>
                 <Td className="whitespace-nowrap">{formatDateTime(p.approvedAt)}</Td>
@@ -116,7 +117,7 @@ export default async function AdminPaymentsPage() {
           </Table>
         </Card>
         <Card title="Derniers reversements">
-          <Table head={["Date", "Éducateur", "Montant", "Mode", "Réf.", "Par"]}>
+          <Table bare head={["Date", "Éducateur", "Montant", "Mode", "Réf.", "Par"]}>
             {recentPayouts.map((p) => (
               <tr key={p.id}>
                 <Td className="whitespace-nowrap">{formatDate(p.executedAt)}</Td>

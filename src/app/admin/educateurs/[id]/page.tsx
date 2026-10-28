@@ -7,6 +7,7 @@ import { formatDate, formatDateTime, fullName } from "@/lib/format";
 import { Badge, Card, DefinitionList, PageHeader, Stars } from "@/components/ui";
 import { ProfileBadge, TutoringBadge } from "@/components/status";
 import { EducatorDecisionForms, UserStatusForm } from "@/components/admin/forms";
+import { Avatar } from "@/components/avatar";
 import { slotLabel } from "@/server/services/tutoring";
 
 export const metadata = { title: "Dossier éducateur" };
@@ -29,9 +30,24 @@ export default async function AdminEducatorPage({ params }: { params: Promise<{ 
 
   return (
     <>
-      <PageHeader title={fullName(e.user)} subtitle={<>Dossier : <ProfileBadge status={e.status} /></>} back="/admin/educateurs" />
-      <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-5">
+      <PageHeader
+        back="/admin/educateurs"
+        eyebrow="Dossier éducateur"
+        title={
+          <span className="flex items-center gap-3">
+            <Avatar name={fullName(e.user)} documentId={e.documents.find((d) => d.type === "PHOTO")?.id} size={48} />
+            {fullName(e.user)}
+          </span>
+        }
+        subtitle={
+          <span className="flex flex-wrap items-center gap-2">
+            <ProfileBadge status={e.status} />
+            {e.user.status === "SUSPENDED" && <Badge tone="red">Compte suspendu</Badge>}
+          </span>
+        }
+      />
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.5fr_1fr]">
+        <div className="space-y-6">
           <Card title="Identité et contact">
             <DefinitionList
               items={[
@@ -72,12 +88,12 @@ export default async function AdminEducatorPage({ params }: { params: Promise<{ 
           </Card>
           <Card title="Tutorats">
             {e.tutorings.length === 0 ? (
-              <p className="text-sm text-slate-600">Aucun tutorat.</p>
+              <p className="text-sm text-slate-500">Aucun tutorat.</p>
             ) : (
               <ul className="divide-y divide-slate-100 text-sm">
                 {e.tutorings.map((t) => (
                   <li key={t.id} className="flex justify-between gap-2 py-2">
-                    <Link href={`/admin/tutorats/${t.id}`} className="text-brand-700 hover:underline">
+                    <Link href={`/admin/tutorats/${t.id}`} className="font-medium text-brand-700 hover:text-brand-800">
                       {fullName(t.child)} · {formatDate(t.startDate)}
                     </Link>
                     <TutoringBadge status={t.status} />
@@ -87,13 +103,13 @@ export default async function AdminEducatorPage({ params }: { params: Promise<{ 
             )}
           </Card>
         </div>
-        <div className="space-y-5">
+        <div className="space-y-6">
           <Card title="Pièces justificatives">
-            <ul className="space-y-2 text-sm">
+            <ul className="divide-y divide-slate-100 text-sm">
               {(Object.keys(DOCUMENT_TYPES) as (keyof typeof DOCUMENT_TYPES)[]).map((type) => {
                 const doc = e.documents.find((d) => d.type === type);
                 return (
-                  <li key={type} className="flex justify-between gap-2">
+                  <li key={type} className="flex items-center justify-between gap-2 py-2.5">
                     <span>{DOCUMENT_TYPES[type]}</span>
                     {doc ? (
                       <a href={`/api/fichiers/${doc.id}`} target="_blank" rel="noopener" className="text-brand-700 underline">
@@ -114,7 +130,7 @@ export default async function AdminEducatorPage({ params }: { params: Promise<{ 
                 {e.validatedBy ? ` par ${fullName(e.validatedBy)}` : ""} · {e.level} · <Stars value={e.stars} />
               </p>
             )}
-            {e.status === "REJECTED" && <p className="mb-3 text-sm text-red-700">Rejeté : {e.rejectionReason}</p>}
+            {e.status === "REJECTED" && <p className="mb-3 text-sm text-rose-700">Rejeté : {e.rejectionReason}</p>}
             {e.status === "INCOMPLETE" ? (
               <p className="text-sm text-slate-600">Dossier pas encore transmis par l&apos;éducateur.</p>
             ) : (
@@ -126,9 +142,9 @@ export default async function AdminEducatorPage({ params }: { params: Promise<{ 
           </Card>
           <Card title="Avis des familles">
             {e.reviews.length === 0 ? (
-              <p className="text-sm text-slate-600">Aucun avis.</p>
+              <p className="text-sm text-slate-500">Aucun avis.</p>
             ) : (
-              <ul className="space-y-2 text-sm">
+              <ul className="divide-y divide-slate-100 text-sm">
                 {e.reviews.map((r) => (
                   <li key={r.id}>
                     <Stars value={r.rating} /> {r.comment}

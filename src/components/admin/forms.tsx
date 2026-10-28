@@ -21,20 +21,20 @@ import { Button } from "@/components/ui";
 export function EducatorDecisionForms({ educatorId, defaults }: { educatorId: string; defaults: { stars?: number; level?: string } }) {
   return (
     <div className="space-y-5">
-      <ActionForm action={validateEducatorAction} className="space-y-3">
+      <ActionForm action={validateEducatorAction} className="space-y-4">
         <FormMessage />
         <input type="hidden" name="educatorId" value={educatorId} />
         <div className="grid grid-cols-2 gap-3">
           <SelectField label="Note Access" name="stars" required defaultValue={defaults.stars ? String(defaults.stars) : ""} placeholder="Choisir…" options={["5", "4", "3", "2", "1"].map((v) => [v, "★".repeat(Number(v))] as const)} />
           <SelectField label="Niveau" name="level" required defaultValue={defaults.level ?? ""} placeholder="Choisir…" options={EDUCATOR_LEVELS.map((l) => [l, l] as const)} />
         </div>
-        <SubmitButton>Valider le dossier</SubmitButton>
+        <SubmitButton className="w-full">Valider le dossier</SubmitButton>
       </ActionForm>
-      <ActionForm action={rejectEducatorAction} className="space-y-3 border-t border-slate-200 pt-4" confirmMessage="Rejeter ce dossier ?">
+      <ActionForm action={rejectEducatorAction} className="space-y-4 border-t border-slate-100 pt-5" confirmMessage="Rejeter ce dossier ?">
         <FormMessage />
         <input type="hidden" name="educatorId" value={educatorId} />
         <TextArea label="Motif du rejet" name="reason" rows={2} required hint="Communiqué à l'éducateur pour qu'il corrige son dossier." />
-        <SubmitButton variant="danger">Rejeter</SubmitButton>
+        <SubmitButton variant="danger-soft">Rejeter le dossier</SubmitButton>
       </ActionForm>
     </div>
   );
@@ -47,7 +47,7 @@ export function UserStatusForm({ userId, status }: { userId: string; status: "AC
       <FormMessage />
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="status" value={next} />
-      <SubmitButton variant={next === "SUSPENDED" ? "danger" : "secondary"}>{next === "SUSPENDED" ? "Suspendre le compte" : "Réactiver le compte"}</SubmitButton>
+      <SubmitButton variant={next === "SUSPENDED" ? "danger-soft" : "secondary"} size="sm">{next === "SUSPENDED" ? "Suspendre le compte" : "Réactiver le compte"}</SubmitButton>
     </ActionForm>
   );
 }
@@ -76,7 +76,7 @@ export function ComplaintHandlingForm({ complaintId, defaults }: { complaintId: 
 
 export function TariffForm({ defaults, classes }: { defaults?: { classLevel: string; hourlyRate: number; sessionsPerWeek: number; hoursPerSession: number }; classes: string[] }) {
   return (
-    <ActionForm action={saveTariffAction} className="grid items-end gap-3 sm:grid-cols-5">
+    <ActionForm action={saveTariffAction} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-5">
       <div className="sm:col-span-5">
         <FormMessage />
       </div>
@@ -93,9 +93,29 @@ export function TariffForm({ defaults, classes }: { defaults?: { classLevel: str
   );
 }
 
+// Ligne compacte de la grille tarifaire : libellés portés par l'en-tête du tableau.
+export function TariffRow({ tariff, perInstallment }: { tariff: { classLevel: string; hourlyRate: number; sessionsPerWeek: number; hoursPerSession: number }; perInstallment: string }) {
+  return (
+    <ActionForm action={saveTariffAction} className="grid grid-cols-2 items-center gap-2.5 py-3 sm:grid-cols-[110px_1fr_1fr_1fr_140px_auto]">
+      <input type="hidden" name="classLevel" value={tariff.classLevel} />
+      <p className="col-span-2 text-sm font-semibold text-ink sm:col-span-1">{tariff.classLevel}</p>
+      <input name="hourlyRate" type="number" min={100} defaultValue={tariff.hourlyRate} className="field h-10" aria-label={`Tarif horaire ${tariff.classLevel}`} />
+      <input name="sessionsPerWeek" type="number" min={1} max={7} defaultValue={tariff.sessionsPerWeek} className="field h-10" aria-label={`Séances par semaine ${tariff.classLevel}`} />
+      <input name="hoursPerSession" type="number" min={1} max={3} defaultValue={tariff.hoursPerSession} className="field h-10" aria-label={`Heures par séance ${tariff.classLevel}`} />
+      <p className="text-[13px] text-slate-500 tabular-nums">{perInstallment}</p>
+      <SubmitButton variant="secondary" size="sm" pendingLabel="…">
+        Enregistrer
+      </SubmitButton>
+      <div className="col-span-full empty:hidden">
+        <FormMessage />
+      </div>
+    </ActionForm>
+  );
+}
+
 export function SettingsForm({ defaults }: { defaults: { commissionPercent: number; maxDurationWeeks: number; weeksPerInstallment: number } }) {
   return (
-    <ActionForm action={saveSettingsAction} className="grid items-end gap-3 sm:grid-cols-4">
+    <ActionForm action={saveSettingsAction} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-4">
       <div className="sm:col-span-4">
         <FormMessage />
       </div>
@@ -109,7 +129,7 @@ export function SettingsForm({ defaults }: { defaults: { commissionPercent: numb
 
 export function CreateAdminForm() {
   return (
-    <ActionForm action={createAdminAction} className="grid gap-3 sm:grid-cols-2" resetOnSuccess>
+    <ActionForm action={createAdminAction} className="grid grid-cols-1 gap-3 sm:grid-cols-2" resetOnSuccess>
       <div className="sm:col-span-2">
         <FormMessage />
       </div>
@@ -134,7 +154,7 @@ export function PayoutForms({ payoutId, fedapay }: { payoutId: string; fedapay: 
         <ActionForm action={fedapayPayoutAction} confirmMessage="Envoyer ce reversement sur le Mobile Money de l'éducateur ?">
           <FormMessage />
           <input type="hidden" name="payoutId" value={payoutId} />
-          <SubmitButton className="px-3 py-1.5 text-xs" pendingLabel="Envoi…">
+          <SubmitButton size="sm" pendingLabel="Envoi…">
             Reverser via FedaPay
           </SubmitButton>
         </ActionForm>
@@ -144,13 +164,13 @@ export function PayoutForms({ payoutId, fedapay }: { payoutId: string; fedapay: 
           <FormMessage />
           <input type="hidden" name="payoutId" value={payoutId} />
           <TextField label="Référence du virement" name="providerReference" required className="min-w-40" />
-          <SubmitButton className="px-3 py-1.5 text-xs">Enregistrer</SubmitButton>
-          <Button type="button" variant="ghost" className="px-3 py-1.5 text-xs" onClick={() => setManual(false)}>
+          <SubmitButton size="sm">Enregistrer</SubmitButton>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setManual(false)}>
             Annuler
           </Button>
         </ActionForm>
       ) : (
-        <Button type="button" variant="ghost" className="px-0 py-0 text-xs" onClick={() => setManual(true)}>
+        <Button type="button" variant="ghost" size="sm" className="text-slate-500" onClick={() => setManual(true)}>
           Saisir un reversement manuel
         </Button>
       )}
@@ -164,20 +184,20 @@ export function AdminStopTutoringForm({ tutoringId }: { tutoringId: string }) {
       <FormMessage />
       <input type="hidden" name="tutoringId" value={tutoringId} />
       <TextArea label="Motif" name="reason" rows={2} required />
-      <SubmitButton variant="danger">Arrêter le tutorat</SubmitButton>
+      <SubmitButton variant="danger-soft">Arrêter le tutorat</SubmitButton>
     </ActionForm>
   );
 }
 
 export function DisputeForm({ lessonId }: { lessonId: string }) {
   return (
-    <ActionForm action={resolveDisputeAction} className="mt-2 flex flex-wrap gap-2">
+    <ActionForm action={resolveDisputeAction} className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
       <FormMessage />
       <input type="hidden" name="lessonId" value={lessonId} />
-      <SubmitButton name="decision" value="CONFIRMED" variant="secondary" className="px-3 py-1.5 text-xs">
+      <SubmitButton name="decision" value="CONFIRMED" variant="secondary" size="sm">
         Valider la séance
       </SubmitButton>
-      <SubmitButton name="decision" value="REMOVE" variant="danger" className="px-3 py-1.5 text-xs">
+      <SubmitButton name="decision" value="REMOVE" variant="danger-soft" size="sm">
         Retirer la séance
       </SubmitButton>
     </ActionForm>

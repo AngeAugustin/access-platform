@@ -15,8 +15,8 @@ export default async function AdminComplaintPage({ params }: { params: Promise<{
   if (!c) notFound();
   return (
     <>
-      <PageHeader title={c.subject} back="/admin/reclamations" />
-      <div className="grid gap-5 lg:grid-cols-2">
+      <PageHeader back="/admin/reclamations" eyebrow="Réclamation" title={c.subject} subtitle={`${fullName(c.author)} · ${formatDateTime(c.createdAt)}`} />
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         <Card title="Demande">
           <DefinitionList
             items={[
@@ -27,7 +27,7 @@ export default async function AdminComplaintPage({ params }: { params: Promise<{
               ["Traitée par", c.handledBy ? `${fullName(c.handledBy)} le ${formatDateTime(c.handledAt)}` : "—"],
             ]}
           />
-          <p className="mt-4 whitespace-pre-line rounded-lg bg-slate-50 p-3 text-sm">{c.details}</p>
+          <p className="mt-5 rounded-xl bg-slate-50 p-4 text-[15px] leading-relaxed whitespace-pre-line text-slate-700">{c.details}</p>
         </Card>
         <Card title="Réponse">
           <ComplaintHandlingForm complaintId={c.id} defaults={{ status: c.status, response: c.response ?? "" }} />
