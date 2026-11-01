@@ -18,7 +18,7 @@ npm run db:seed             # super-administrateur, paramètres, grille tarifair
 npm run dev                 # http://localhost:3000
 ```
 
-`SEED_DEMO=1 npm run db:seed` ajoute un parent, un éducateur validé et un enfant de démonstration (mot de passe `Demo12345678`). Interdit en production.
+Hors production, `npm run db:seed` crée trois comptes de démonstration, tous avec le mot de passe `Demo12345678` : `admin@demo.local` (super-administrateur), `parent@demo.local` (avec un enfant) et `educateur@demo.local` (profil validé). `SEED_DEMO=0` retire le parent et l'éducateur ; `SEED_ADMIN_EMAIL` et `SEED_ADMIN_PASSWORD` remplacent l'accès admin. En production, aucun compte de démonstration et aucun mot de passe connu.
 
 La grille tarifaire créée par le seed est un **exemple** : remplacez-la par les vrais tarifs depuis `/admin/tarifs`.
 

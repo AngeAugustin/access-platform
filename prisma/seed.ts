@@ -1,5 +1,5 @@
 // Initialisation de la base : super-administrateur, grille tarifaire, paramètres.
-// Données de démonstration (parent, éducateur, enfant) avec SEED_DEMO=1, jamais en production.
+// Hors production, ajoute aussi des comptes de démonstration (parent, éducateur, enfant) ; SEED_DEMO=0 les désactive.
 import "dotenv/config";
 import { randomBytes } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -8,6 +8,10 @@ import { PrismaClient } from "../src/generated/prisma/client";
 import { CLASS_LEVELS, DEFAULT_SETTINGS } from "../src/lib/constants";
 
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
+const isProduction = process.env.NODE_ENV === "production";
+const DEMO_PASSWORD = "Demo12345678";
+// Une variable laissée vide dans .env compte comme absente.
+const env = (key: string) => process.env[key] || undefined;
 const hashPassword = (p: string) => hash(p, { memoryCost: 19456, timeCost: 2, parallelism: 1 });
 
 // Tarifs d'EXEMPLE à remplacer par la grille réelle d'Access depuis l'écran « Tarifs ».
@@ -29,15 +33,16 @@ async function main() {
     });
   }
 
-  const email = (process.env.SEED_ADMIN_EMAIL ?? "admin@access.local").toLowerCase();
+  const email = (env("SEED_ADMIN_EMAIL") ?? (isProduction ? "admin@access.local" : "admin@demo.local")).toLowerCase();
   const existing = await db.user.findUnique({ where: { email } });
   if (!existing) {
-    const password = process.env.SEED_ADMIN_PASSWORD ?? randomBytes(12).toString("base64url");
+    // En production, jamais de mot de passe connu par défaut.
+    const password = env("SEED_ADMIN_PASSWORD") ?? (isProduction ? randomBytes(12).toString("base64url") : DEMO_PASSWORD);
     await db.user.create({
       data: {
         email,
-        npi: process.env.SEED_ADMIN_NPI ?? "0000000000",
-        phone: process.env.SEED_ADMIN_PHONE ?? "0100000000",
+        npi: env("SEED_ADMIN_NPI") ?? "0000000000",
+        phone: env("SEED_ADMIN_PHONE") ?? "0100000000",
         firstName: "Super",
         lastName: "Admin",
         role: "ADMIN",
@@ -46,12 +51,13 @@ async function main() {
       },
     });
     console.log(`Super-administrateur créé : ${email}`);
-    if (!process.env.SEED_ADMIN_PASSWORD) console.log(`Mot de passe provisoire (à changer dès la première connexion) : ${password}`);
+    if (!env("SEED_ADMIN_PASSWORD")) console.log(`Mot de passe provisoire (à changer dès la première connexion) : ${password}`);
   }
 
-  if (process.env.SEED_DEMO === "1") {
-    if (process.env.NODE_ENV === "production") throw new Error("SEED_DEMO est interdit en production.");
-    const demoPassword = await hashPassword("Demo12345678");
+  const demo = process.env.SEED_DEMO ? process.env.SEED_DEMO === "1" : !isProduction;
+  if (demo) {
+    if (isProduction) throw new Error("SEED_DEMO est interdit en production.");
+    const demoPassword = await hashPassword(DEMO_PASSWORD);
     const parent = await db.user.upsert({
       where: { email: "parent@demo.local" },
       update: {},
@@ -112,7 +118,7 @@ async function main() {
         },
       });
     }
-    console.log(`Démo : parent@demo.local / educateur@demo.local (mot de passe Demo12345678), éducateur ${profile.id}`);
+    console.log(`Démo : parent@demo.local / educateur@demo.local (mot de passe ${DEMO_PASSWORD}), éducateur ${profile.id}`);
   }
 }
 
