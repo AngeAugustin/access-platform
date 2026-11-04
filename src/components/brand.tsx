@@ -1,23 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cx } from "@/components/ui";
+import icon from "@/assets/brand/icon.png";
+import logo from "@/assets/brand/logo.png";
+import logoLight from "@/assets/brand/logo-light.png";
 
-// Logo Access : un « A » stylisé dans une pastille, suivi du nom.
+// Icône Access Tutorat seule (élève et étoile).
 export function LogoMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 32 32" className={cx("size-8", className)} aria-hidden>
-      <rect width="32" height="32" rx="9" className="fill-brand-600" />
-      <path d="M9.5 23 16 8.5 22.5 23" fill="none" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12.2 18h7.6" stroke="white" strokeWidth="2.6" strokeLinecap="round" />
-      <circle cx="24.5" cy="9" r="2.6" className="fill-amber-400" />
-    </svg>
-  );
+  return <Image src={icon} alt="" width={59} height={64} className={cx("size-8 object-contain", className)} />;
 }
 
+// Logo complet ; la variante claire (personnage et texte en blanc) se pose sur fond sombre.
 export function Logo({ href = "/", tone = "dark", className }: { href?: string; tone?: "dark" | "light"; className?: string }) {
   return (
-    <Link href={href} className={cx("inline-flex items-center gap-2.5", className)} aria-label="Access, accueil">
-      <LogoMark />
-      <span className={cx("text-[17px] font-semibold tracking-tight", tone === "light" ? "text-white" : "text-ink")}>Access</span>
+    <Link href={href} className={cx("inline-flex items-center", className)} aria-label="Access Tutorat, accueil">
+      <Image src={tone === "light" ? logoLight : logo} alt="" width={110} height={48} preload className="h-12 w-auto" />
     </Link>
   );
 }

@@ -5,7 +5,11 @@ import { ActionForm, FormMessage, SubmitButton, TextField } from "@/components/u
 
 export function ProfileForm({ defaults }: { defaults: { firstName: string; lastName: string; phone: string; city: string; address: string } }) {
   return (
-    <ActionForm action={updateProfileAction} className="space-y-5">
+    <ActionForm
+      action={updateProfileAction}
+      className="space-y-5"
+      confirm={{ title: "Enregistrer les modifications ?", description: "Vos informations de profil seront mises à jour.", confirmLabel: "Enregistrer" }}
+    >
       <FormMessage />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField label="Prénom" name="firstName" defaultValue={defaults.firstName} required />

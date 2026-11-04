@@ -121,6 +121,15 @@ export function planStop(
   return changes;
 }
 
+// Reversement ramené aux semaines effectuées quand une partie de l'échéance est remboursée au parent.
+// Le taux de commission d'origine est conservé ; null quand il ne reste rien à reverser.
+export function reducePayout(payout: { grossAmount: number; commissionAmount: number }, refundAmount: number) {
+  const grossAmount = payout.grossAmount - refundAmount;
+  if (grossAmount <= 0) return null;
+  const commissionAmount = payout.grossAmount > 0 ? Math.round((grossAmount * payout.commissionAmount) / payout.grossAmount) : 0;
+  return { grossAmount, commissionAmount, netAmount: grossAmount - commissionAmount };
+}
+
 export function splitCommission(grossAmount: number, commissionPercent: number) {
   if (commissionPercent < 0 || commissionPercent > 100) {
     throw new Error("La commission doit être comprise entre 0 et 100 %.");

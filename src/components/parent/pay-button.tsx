@@ -5,13 +5,16 @@ import { LoaderCircle, Smartphone } from "lucide-react";
 import { payInstallmentAction } from "@/server/actions/parent";
 import { Button } from "@/components/ui";
 
-export function PayButton({ installmentId, label = "Payer" }: { installmentId: string; label?: string }) {
+// `large` : bouton pleine largeur de la carte « À payer ».
+export function PayButton({ installmentId, label = "Payer", large = false }: { installmentId: string; label?: string; large?: boolean }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   return (
-    <div>
+    <div className={large ? "w-full" : undefined}>
       <Button
-        size="sm"
+        size={large ? "lg" : "sm"}
+        variant={large ? "accent" : "primary"}
+        className={large ? "w-full" : undefined}
         disabled={pending}
         onClick={() =>
           start(async () => {
@@ -25,7 +28,7 @@ export function PayButton({ installmentId, label = "Payer" }: { installmentId: s
         {pending ? <LoaderCircle className="animate-spin" aria-hidden /> : <Smartphone aria-hidden />}
         {pending ? "Redirection…" : label}
       </Button>
-      {error && <p className="mt-1.5 max-w-48 text-xs text-rose-600">{error}</p>}
+      {error && <p className={large ? "mt-2 text-center text-13px text-rose-300" : "mt-1.5 max-w-48 text-xs text-rose-600"}>{error}</p>}
     </div>
   );
 }

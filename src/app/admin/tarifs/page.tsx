@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
-import { CLASS_LEVELS } from "@/lib/constants";
+import { activeClasses } from "@/lib/curriculum";
+import { getCurriculum } from "@/server/queries/curriculum";
 import { formatFcfa } from "@/lib/format";
 import { amountForWeeks } from "@/lib/billing";
 import { getSettings } from "@/server/services/settings";
@@ -11,9 +12,9 @@ export const metadata = { title: "Tarifs et paramètres" };
 
 export default async function TariffsPage() {
   const admin = await requireRole("ADMIN");
-  const [tariffs, settings] = await Promise.all([db.tariff.findMany(), getSettings()]);
-  const ordered = CLASS_LEVELS.map((c) => tariffs.find((t) => t.classLevel === c)).filter((t) => t !== undefined);
-  const missing = CLASS_LEVELS.filter((c) => !tariffs.some((t) => t.classLevel === c));
+  const [tariffs, settings, curriculum] = await Promise.all([db.tariff.findMany(), getSettings(), getCurriculum()]);
+  const ordered = curriculum.classes.map((c) => tariffs.find((t) => t.classLevel === c.name)).filter((t) => t !== undefined);
+  const missing = activeClasses(curriculum).filter((c) => !tariffs.some((t) => t.classLevel === c));
 
   return (
     <>

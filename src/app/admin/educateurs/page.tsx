@@ -4,25 +4,34 @@ import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { PROFILE_STATUS } from "@/lib/constants";
 import { formatDate, fullName } from "@/lib/format";
-import { Badge, EmptyState, PageHeader, Stars, Table, Td } from "@/components/ui";
-import { ProfileBadge } from "@/components/status";
+import { EmptyState, PageHeader, Stars, Table, Td } from "@/components/ui";
+import { AccountBadge, ProfileBadge } from "@/components/status";
 import { SearchBar, userSearch } from "@/components/admin/search-bar";
 import { Avatar } from "@/components/avatar";
+import { Pagination } from "@/components/ui/pagination";
+import { pageSlice } from "@/lib/pagination";
 
 export const metadata = { title: "Éducateurs" };
 
-export default async function AdminEducatorsPage({ searchParams }: { searchParams: Promise<{ q?: string; statut?: string }> }) {
+export default async function AdminEducatorsPage({ searchParams }: { searchParams: Promise<{ q?: string; statut?: string; page?: string }> }) {
   await requireRole("ADMIN");
-  const { q, statut } = await searchParams;
+  const { q, statut, page } = await searchParams;
   const status = statut && statut in PROFILE_STATUS ? (statut as keyof typeof PROFILE_STATUS) : undefined;
-  const educators = await db.educatorProfile.findMany({
+  // L'ordre voulu (transmis, refusés, incomplets, validés) n'est pas celui de l'énumération : on trie les
+  // identifiants en mémoire, puis on ne charge le détail que de la page affichée.
+  const all = await db.educatorProfile.findMany({
     where: { ...(status ? { status } : {}), user: userSearch(q) },
-    include: { user: true, _count: { select: { bookedSlots: true } } },
+    select: { id: true, status: true },
     orderBy: [{ submittedAt: "asc" }, { createdAt: "desc" }],
-    take: 200,
   });
   const order = { SUBMITTED: 0, REJECTED: 1, INCOMPLETE: 2, VALIDATED: 3 };
-  educators.sort((a, b) => order[a.status] - order[b.status]);
+  const { items: pageIds, info } = pageSlice(
+    all.sort((a, b) => order[a.status] - order[b.status]).map((e) => e.id),
+    page,
+  );
+  const rows = await db.educatorProfile.findMany({ where: { id: { in: pageIds } }, include: { user: true, _count: { select: { bookedSlots: true } } } });
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const educators = pageIds.flatMap((id) => byId.get(id) ?? []);
 
   return (
     <>
@@ -61,11 +70,14 @@ export default async function AdminEducatorsPage({ searchParams }: { searchParam
               </Td>
               <Td>{e._count.bookedSlots}</Td>
               <Td className="whitespace-nowrap">{formatDate(e.submittedAt)}</Td>
-              <Td>{e.user.status === "SUSPENDED" ? <Badge tone="red">Suspendu</Badge> : <Badge tone="green">Actif</Badge>}</Td>
+              <Td>
+                <AccountBadge status={e.user.status} lockedUntil={e.user.lockedUntil} />
+              </Td>
             </tr>
           ))}
         </Table>
       )}
+      <Pagination info={info} path="/admin/educateurs" params={{ q, statut }} label="éducateur" />
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addWeeks, amountForWeeks, planInstallments, planStop, splitCommission, weeksElapsed } from "@/lib/billing";
+import { addWeeks, amountForWeeks, planInstallments, planStop, reducePayout, splitCommission, weeksElapsed } from "@/lib/billing";
 
 const rate = { hourlyRate: 1500, sessionsPerWeek: 2, hoursPerSession: 2 };
 const start = new Date("2026-01-05T00:00:00Z");
@@ -91,5 +91,16 @@ describe("splitCommission", () => {
   });
   it("refuse un pourcentage hors bornes", () => {
     expect(() => splitCommission(1000, 120)).toThrow();
+  });
+});
+
+describe("reducePayout", () => {
+  it("retire le remboursement en gardant le taux de commission d'origine", () => {
+    // 20 000 FCFA à 15 % ; 5 000 remboursés au parent.
+    expect(reducePayout({ grossAmount: 20000, commissionAmount: 3000 }, 5000)).toEqual({ grossAmount: 15000, commissionAmount: 2250, netAmount: 12750 });
+  });
+
+  it("ne laisse rien à reverser quand toute l'échéance est remboursée", () => {
+    expect(reducePayout({ grossAmount: 20000, commissionAmount: 3000 }, 20000)).toBeNull();
   });
 });

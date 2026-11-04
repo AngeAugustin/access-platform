@@ -9,11 +9,14 @@ export const metadata: Metadata = {
   description: "Trouvez un éducateur vérifié pour votre enfant, suivez chaque séance et payez en Mobile Money.",
   applicationName: "Access",
   appleWebApp: { capable: true, title: "Access", statusBarStyle: "default" },
+  // Safari iOS transforme sinon numéros, dates et adresses en liens et modifie le HTML avant l'hydratation
+  // (attributs x-apple-data-detectors), ce que React signale comme une erreur. Les liens tel: utiles sont déjà explicites.
+  formatDetection: { telephone: false, date: false, address: false, email: false },
   icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#4b48e3",
+  themeColor: "#004aad",
   width: "device-width",
   initialScale: 1,
 };

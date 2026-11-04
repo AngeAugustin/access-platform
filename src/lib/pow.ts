@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { checkSolution, issueChallenge, type PowPurpose } from "@/lib/pow-core";
 
 // Difficulté en bits : environ 2^bits essais de hachage pour le navigateur.
-export const POW_BITS = { register: 15, forgot: 15, login: 18 } as const satisfies Record<PowPurpose, number>;
+export const POW_BITS = { register: 15, forgot: 15, login: 18, contact: 15 } as const satisfies Record<PowPurpose, number>;
 
 let devSecret: string | null = null;
 function secret(): string {

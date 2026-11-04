@@ -11,19 +11,22 @@ export type CurrentUser = {
   lastName: string;
   email: string;
   isSuperAdmin: boolean;
+  mustChangePassword: boolean;
 };
 
 // Couche d'accès aux données : point unique de lecture de l'utilisateur courant, mémorisé par requête.
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const session = await readSession();
   if (!session) return null;
-  const { id, role, firstName, lastName, email, isSuperAdmin } = session.user;
-  return { id, role, firstName, lastName, email, isSuperAdmin };
+  const { id, role, firstName, lastName, email, isSuperAdmin, mustChangePassword } = session.user;
+  return { id, role, firstName, lastName, email, isSuperAdmin, mustChangePassword };
 });
 
 export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/connexion");
+  // Mot de passe provisoire fixé par un administrateur : rien n'est accessible avant de l'avoir remplacé.
+  if (user.mustChangePassword) redirect("/nouveau-mot-de-passe");
   return user;
 }
 

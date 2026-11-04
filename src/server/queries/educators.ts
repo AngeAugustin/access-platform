@@ -2,11 +2,12 @@ import "server-only";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 
-export type CatalogFilters = { classe?: string; matiere?: string; zone?: string; jour?: string };
+export type CatalogFilters = { cycle?: string; classe?: string; matiere?: string; zone?: string; jour?: string };
 
 // Catalogue public (aux parents connectés) : uniquement les éducateurs validés et actifs.
 export async function listCatalog(filters: CatalogFilters) {
   const where: Prisma.EducatorProfileWhereInput = { status: "VALIDATED", user: { status: "ACTIVE" } };
+  if (filters.cycle) where.cycles = { has: filters.cycle };
   if (filters.classe) where.classLevels = { has: filters.classe };
   if (filters.matiere) where.subjects = { has: filters.matiere };
   if (filters.zone) where.zone = { contains: filters.zone, mode: "insensitive" };

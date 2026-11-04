@@ -6,7 +6,7 @@ import { readStoredFile } from "@/server/services/storage";
 // La photo d'un éducateur validé est aussi visible des parents connectés.
 export async function GET(_: Request, ctx: RouteContext<"/api/fichiers/[id]">) {
   const user = await getCurrentUser();
-  if (!user) return new Response("Non authentifié", { status: 401 });
+  if (!user || user.mustChangePassword) return new Response("Non authentifié", { status: 401 });
   const { id } = await ctx.params;
   const doc = await db.educatorDocument.findUnique({
     where: { id },

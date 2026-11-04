@@ -17,6 +17,7 @@
     "audit:deps": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/inter": "^5.3.0",
     "@node-rs/argon2": "^2.2.2",
     "@prisma/adapter-pg": "^7.10.1",

@@ -14,7 +14,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "@node-rs/argon2";
 import { PrismaClient } from "../src/generated/prisma/client";
 import type { InstallmentStatus, LessonStatus, Role, SubjectLevelValue, TimeSlot, Weekday } from "../src/generated/prisma/client";
-import { CLASS_LEVELS, DEFAULT_SETTINGS, subjectsForClass, type SubjectKey } from "../src/lib/constants";
+import { DEFAULT_SETTINGS } from "../src/lib/constants";
+import { loadCurriculum, subjectsForClass } from "../src/lib/curriculum";
 import { addWeeks } from "../src/lib/billing";
 import { storeBuffer } from "../src/server/services/storage";
 
@@ -78,7 +79,8 @@ export function parseLevel(v: string | null): SubjectLevelValue | null {
   return null;
 }
 
-const LEGACY_LEVEL_COLUMNS: Record<SubjectKey, string> = {
+// Colonne de l'ancienne table « enfant » pour chaque matière du référentiel repris par la migration « curriculum ».
+const LEGACY_LEVEL_COLUMNS: Record<string, string> = {
   francais: "niveau_francais",
   anglais: "niveau_anglais",
   allemand: "niveau_allemand",
@@ -131,6 +133,10 @@ async function main() {
   const existing = await db.user.count({ where: { NOT: { isSuperAdmin: true } } });
   if (existing > 0 && !DRY_RUN) throw new Error(`La base cible contient déjà ${existing} utilisateur(s) : migration annulée.`);
 
+  // Référentiel en base (créé par la migration « curriculum ») : sert à repérer les classes inconnues.
+  const curriculum = await loadCurriculum(db);
+  const knownClass = (name: string) => curriculum.classes.some((c) => c.name === name);
+
   const legacy = {
     users: await rows(conn, "user"),
     educators: await rows(conn, "educateur"),
@@ -156,7 +162,7 @@ async function main() {
       if (!classLevel || !hourlyRate) continue;
       const rate = { hourlyRate, sessionsPerWeek: int(t.nbre_seances_semaine) ?? 2, hoursPerSession: Math.min(3, int(t.nbre_heure_seance) ?? 2) };
       tariffByClass.set(classLevel, rate);
-      if (!(CLASS_LEVELS as readonly string[]).includes(classLevel)) warn(`Tarif pour une classe inconnue « ${classLevel} » importé tel quel.`);
+      if (!knownClass(classLevel)) warn(`Tarif pour une classe inconnue « ${classLevel} » importé tel quel : ajoutez-la au référentiel.`);
       await tx.tariff.upsert({ where: { classLevel }, create: { classLevel, ...rate }, update: rate });
       count("tarifs");
     }
@@ -286,9 +292,10 @@ async function main() {
         continue;
       }
       const currentClass = str(c.classe_actuelle) ?? "";
-      if (!(CLASS_LEVELS as readonly string[]).includes(currentClass)) warn(`Enfant ${npiChild} : classe « ${currentClass} » hors référentiel.`);
+      if (!knownClass(currentClass)) warn(`Enfant ${npiChild} : classe « ${currentClass} » hors référentiel, à ajouter depuis l'administration.`);
       const levels: { subject: string; level: SubjectLevelValue }[] = [];
-      for (const subject of subjectsForClass(currentClass)) {
+      for (const subject of subjectsForClass(curriculum, currentClass)) {
+        if (!LEGACY_LEVEL_COLUMNS[subject]) continue;
         const raw = str(c[LEGACY_LEVEL_COLUMNS[subject]]);
         const level = parseLevel(raw);
         if (level) levels.push({ subject, level });

@@ -93,7 +93,7 @@ export function TutoringRequestForm({
             <span className="text-sm text-slate-500">Total sur {weeks} semaine{weeks > 1 ? "s" : ""}</span>
             <span className="text-xl font-semibold tracking-tight text-ink tabular-nums">{formatFcfa(total)}</span>
           </div>
-          <div className="mt-3 space-y-1.5 border-t border-slate-200/70 pt-3 text-[13px] text-slate-500">
+          <div className="mt-3 space-y-1.5 border-t border-slate-200/70 pt-3 text-13px text-slate-500">
             <p className="flex justify-between gap-3">
               <span>Rythme</span>
               <span className="text-slate-700">

@@ -1,7 +1,7 @@
 import "server-only";
 import webpush from "web-push";
 import { db } from "@/lib/db";
-import { escapeHtml, sendMail } from "./mail";
+import { emailButton, escapeHtml, sendMail } from "./mail";
 
 let vapidReady: boolean | null = null;
 function ensureVapid(): boolean {
@@ -55,9 +55,7 @@ export async function notify(input: NotificationInput): Promise<void> {
     const user = await db.user.findUnique({ where: { id: input.userId }, select: { email: true } });
     if (user) {
       const appUrl = process.env.APP_URL ?? "";
-      const link = input.link
-        ? `<p><a href="${escapeHtml(appUrl + input.link)}" style="color:#1d4ed8">Ouvrir Access</a></p>`
-        : "";
+      const link = input.link ? emailButton(appUrl + input.link, "Ouvrir Access") : "";
       tasks.push(sendMail(user.email, input.title, input.title, `<p>${escapeHtml(input.body)}</p>${link}`));
     }
   }

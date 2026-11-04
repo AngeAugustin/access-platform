@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
-import { SUBJECTS, SUBJECT_LEVELS, TIME_SLOTS, type SubjectKey } from "@/lib/constants";
+import { SUBJECT_LEVELS, TIME_SLOTS } from "@/lib/constants";
+import { subjectLabel } from "@/lib/curriculum";
+import { getCurriculum } from "@/server/queries/curriculum";
 import { formatDate, fullName } from "@/lib/format";
 import { Card, DefinitionList, PageHeader } from "@/components/ui";
 import { Avatar } from "@/components/avatar";
@@ -27,6 +29,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
     },
   });
   if (!t) notFound();
+  const curriculum = await getCurriculum();
   const end = t.stoppedAt ?? t.endDate;
   const canRecord = t.status === "ACTIVE" || withinGracePeriod(end);
 
@@ -72,11 +75,11 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
               ]}
             />
             <div className="mt-6 border-t border-slate-100 pt-5">
-              <h3 className="mb-3 text-[13px] text-slate-500">Niveau par matière</h3>
+              <h3 className="mb-3 text-13px text-slate-500">Niveau par matière</h3>
               <div className="flex flex-wrap gap-2">
                 {t.child.subjectLevels.map((l) => (
-                  <span key={l.id} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[13px] ring-1 ring-slate-200/70 ring-inset">
-                    <span className="text-slate-600">{SUBJECTS[l.subject as SubjectKey] ?? l.subject}</span>
+                  <span key={l.id} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-13px ring-1 ring-slate-200/70 ring-inset">
+                    <span className="text-slate-600">{subjectLabel(curriculum, l.subject)}</span>
                     <span className="font-medium text-ink">{SUBJECT_LEVELS[l.level]}</span>
                   </span>
                 ))}
@@ -98,7 +101,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
                         </p>
                         <LessonBadge status={l.status} />
                       </div>
-                      <p className="mt-2 text-[15px] leading-relaxed whitespace-pre-line text-slate-700">{l.workDone}</p>
+                      <p className="mt-2 text-15px leading-relaxed whitespace-pre-line text-slate-700">{l.workDone}</p>
                       {l.observation && <p className="mt-2 text-sm text-slate-500 italic">« {l.observation} »</p>}
                       {l.parentComment && <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">Remarque du parent : {l.parentComment}</p>}
                     </div>

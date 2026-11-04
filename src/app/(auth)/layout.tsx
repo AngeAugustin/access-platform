@@ -1,47 +1,40 @@
-import { BadgeCheck, NotebookPen, Wallet } from "lucide-react";
-import { Logo } from "@/components/brand";
+import { Suspense } from "react";
+import "@fontsource-variable/bricolage-grotesque";
+import { AuthAside, AuthMobileHeader, AuthRoleProvider, AuthTopBar } from "@/components/auth/auth-panel";
+import { featuredReview } from "@/server/queries/public";
 
-const points = [
-  { icon: BadgeCheck, title: "Éducateurs vérifiés", text: "Identité, casier judiciaire et diplômes contrôlés." },
-  { icon: NotebookPen, title: "Chaque séance tracée", text: "Un compte rendu à confirmer après chaque cours." },
-  { icon: Wallet, title: "Paiement Mobile Money", text: "MTN, Moov ou carte, par échéances de 4 semaines." },
-];
-
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+  // Un avis indisponible ne doit pas empêcher de se connecter : le panneau affiche alors son accroche.
+  const review = await featuredReview().catch(() => null);
   return (
-    <div className="grid grid-cols-1 min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <aside className="relative hidden overflow-hidden bg-brand-950 p-12 text-white lg:flex lg:flex-col">
-        <div className="absolute -top-32 -left-24 size-96 rounded-full bg-brand-600/40 blur-3xl" aria-hidden />
-        <div className="absolute -right-24 bottom-0 size-80 rounded-full bg-amber-400/15 blur-3xl" aria-hidden />
-        <div className="relative">
-          <Logo tone="light" />
-        </div>
-        <div className="relative mt-auto max-w-md">
-          <h2 className="text-3xl leading-tight font-semibold tracking-tight">Le suivi scolaire de vos enfants, en toute confiance.</h2>
-          <ul className="mt-10 space-y-6">
-            {points.map((p) => (
-              <li key={p.title} className="flex gap-4">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
-                  <p.icon className="size-5" strokeWidth={1.75} aria-hidden />
-                </span>
-                <span>
-                  <span className="block font-medium">{p.title}</span>
-                  <span className="block text-sm text-brand-200">{p.text}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p className="relative mt-12 text-xs text-brand-300">Cotonou · Abomey-Calavi</p>
-      </aside>
-      <main className="flex flex-col bg-white">
-        <div className="px-4 pt-6 sm:px-8 lg:hidden">
-          <Logo />
-        </div>
-        <div className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8">
-          <div className="w-full max-w-[440px] animate-fade-in">{children}</div>
-        </div>
-      </main>
-    </div>
+    <AuthRoleProvider>
+      {/* Sur grand écran, la page tient dans la fenêtre : seule la colonne du formulaire défile si besoin. */}
+      <div className="flex min-h-dvh bg-white lg:h-dvh lg:gap-3 lg:p-3">
+        {/* Le panneau lit l'URL (rôle choisi) : Suspense évite de rendre toute la page côté client. */}
+        <Suspense>
+          <AuthAside review={review} />
+        </Suspense>
+        <main className="flex min-w-0 flex-1 flex-col lg:overflow-y-auto">
+          <Suspense>
+            <AuthMobileHeader />
+          </Suspense>
+          <div className="relative -mt-7 flex flex-1 flex-col rounded-t-[28px] bg-white px-5 pt-7 pb-5 sm:px-8 lg:mt-0 lg:rounded-none lg:px-10 lg:pt-3 lg:pb-2">
+            <Suspense>
+              <AuthTopBar />
+            </Suspense>
+            <div className="flex flex-1 items-center justify-center lg:py-6">
+              {/* Champs plus hauts et plus arrondis que dans les espaces connectés. */}
+              <div className="w-full max-w-[440px] auth-fields animate-fade-in">{children}</div>
+            </div>
+            <p className="mt-5 text-right text-13px text-slate-500">
+              Powered by{" "}
+              <a href="https://www.augustinfachehoun.pro/fr" target="_blank" rel="noopener noreferrer" className="font-semibold text-ink hover:text-brand-600">
+                AF
+              </a>
+            </p>
+          </div>
+        </main>
+      </div>
+    </AuthRoleProvider>
   );
 }

@@ -1,7 +1,7 @@
 import { Banknote, CircleCheck, Hourglass, Wallet } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
-import { formatDate, formatFcfa, fullName } from "@/lib/format";
+import { formatDate, formatFcfa, fullName, payoutAccount } from "@/lib/format";
 import { Card, EmptyState, List, ListRow, PageHeader, Stat } from "@/components/ui";
 import { InstallmentBadge, PayoutBadge } from "@/components/status";
 
@@ -32,7 +32,7 @@ export default async function EducatorPaymentsPage() {
     <>
       <PageHeader
         title="Revenus"
-        subtitle={profile?.payoutPhone ? `Vos reversements arrivent sur le ${profile.payoutPhone}.` : "Renseignez votre numéro Mobile Money dans votre dossier."}
+        subtitle={profile?.payoutPhone ? `Vos reversements arrivent sur le ${payoutAccount(profile)}.` : "Renseignez votre numéro Mobile Money dans votre dossier."}
       />
       <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 [&>:last-child:nth-child(odd)]:col-span-2 lg:[&>:last-child:nth-child(odd)]:col-span-1">
         <Stat label="Déjà reçu" value={formatFcfa(received)} icon={CircleCheck} tone="green" />

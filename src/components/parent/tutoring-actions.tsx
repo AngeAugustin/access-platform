@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "lucide-react";
 import { reviewEducatorAction, reviewLessonAction, stopTutoringAction } from "@/server/actions/parent";
 import { ActionForm, FormMessage, SelectField, SubmitButton, TextArea, useFormState } from "@/components/ui/form";
 import { Button } from "@/components/ui";
@@ -8,32 +9,41 @@ import { Button } from "@/components/ui";
 export function LessonReview({ lessonId }: { lessonId: string }) {
   const [dispute, setDispute] = useState(false);
   return (
-    <ActionForm toast action={reviewLessonAction} className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+    <ActionForm
+      toast
+      action={reviewLessonAction}
+      className="mt-4 space-y-3 border-t border-slate-100 pt-4"
+      confirm={(data) =>
+        data.get("decision") === "DISPUTED"
+          ? { title: "Signaler un problème sur cette séance ?", description: "Votre signalement sera transmis à l’éducateur et à Access pour examen.", confirmLabel: "Envoyer", tone: "danger" }
+          : { title: "Confirmer cette séance ?", description: "Vous attestez qu'elle a bien eu lieu.", confirmLabel: "Confirmer la séance" }
+      }
+    >
       <FormMessage />
       <input type="hidden" name="lessonId" value={lessonId} />
       <Hide>
-        {dispute && <TextArea label="Ce qui ne va pas" name="comment" rows={2} required />}
-        <div className="flex flex-wrap gap-2">
-          {!dispute && (
-            <SubmitButton name="decision" value="CONFIRMED" size="sm">
-              Confirmer la séance
-            </SubmitButton>
-          )}
-          {dispute ? (
-            <>
-              <SubmitButton name="decision" value="DISPUTED" variant="danger" size="sm">
-                Envoyer la contestation
+        {dispute ? (
+          <>
+            <TextArea label="Que s’est-il passé ?" name="comment" rows={3} required hint="L’éducateur et l’équipe Access seront prévenus." />
+            <div className="grid grid-cols-1 gap-2 sm:flex">
+              <SubmitButton name="decision" value="DISPUTED" variant="danger" size="lg">
+                Envoyer le signalement
               </SubmitButton>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setDispute(false)}>
+              <Button type="button" variant="ghost" size="lg" onClick={() => setDispute(false)}>
                 Annuler
               </Button>
-            </>
-          ) : (
-            <Button type="button" variant="secondary" size="sm" onClick={() => setDispute(true)}>
-              Contester
+            </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-1 gap-2 sm:flex">
+            <SubmitButton name="decision" value="CONFIRMED" variant="dark" size="lg">
+              <Check aria-hidden /> Oui, je confirme
+            </SubmitButton>
+            <Button type="button" variant="danger-soft" size="lg" onClick={() => setDispute(true)}>
+              Signaler un problème
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </Hide>
     </ActionForm>
   );
@@ -55,7 +65,8 @@ export function StopTutoringForm({ tutoringId }: { tutoringId: string }) {
     );
   }
   return (
-    <ActionForm toast action={stopTutoringAction} className="w-full max-w-md space-y-3 rounded-2xl border border-rose-200 bg-white p-4 shadow-soft" confirmMessage="Confirmer l'arrêt définitif de ce tutorat ?">
+    <ActionForm toast action={stopTutoringAction} className="w-full max-w-md space-y-3 rounded-2xl border border-rose-200 bg-white p-4 shadow-soft" confirm={{ title: "Arrêter définitivement ce tutorat ?", description: "Cette action ne peut pas être annulée.", confirmLabel: "Arrêter le tutorat", tone: "danger" }}
+    >
       <FormMessage />
       <input type="hidden" name="tutoringId" value={tutoringId} />
       <Hide>

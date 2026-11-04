@@ -39,7 +39,7 @@ export default async function PaymentReturnPage({ searchParams }: { searchParams
         <Icon className="size-8" strokeWidth={1.6} />
       </span>
       <h1 className="mt-6 text-2xl font-semibold tracking-tight text-ink">{title}</h1>
-      <p className="mt-2 text-[15px] leading-relaxed text-slate-500">{text}</p>
+      <p className="mt-2 text-15px leading-relaxed text-slate-500">{text}</p>
       <LinkButton href="/parent/paiements" className="mt-8 w-full" size="lg">
         Retour aux paiements
       </LinkButton>

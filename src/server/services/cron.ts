@@ -9,6 +9,37 @@ import { fedapayConfigured } from "./fedapay";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// Rattrapage des paiements dont le webhook aurait été perdu (transactions de moins de 7 jours),
+// lancé par la tâche quotidienne et, plus souvent, par /api/cron/paiements.
+export async function reconcilePendingPayments(now = new Date()) {
+  let synced = 0;
+  let failed = 0;
+  if (!fedapayConfigured()) return { synced, failed };
+  // Tentative restée sans transaction FedaPay (serveur interrompu pendant l'initialisation) : elle n'aboutira jamais.
+  const orphans = await db.payment.updateMany({
+    where: { status: "PENDING", providerTransactionId: null, createdAt: { lte: new Date(now.getTime() - 10 * 60 * 1000) } },
+    data: { status: "FAILED", statusReason: "Initialisation FedaPay interrompue." },
+  });
+  failed = orphans.count;
+  const pending = await db.payment.findMany({
+    where: {
+      status: "PENDING",
+      providerTransactionId: { not: null },
+      anomaly: null,
+      createdAt: { gte: new Date(now.getTime() - 7 * DAY_MS), lte: new Date(now.getTime() - 5 * 60 * 1000) },
+    },
+    select: { providerTransactionId: true },
+  });
+  for (const p of pending) {
+    try {
+      if ((await syncTransaction(p.providerTransactionId!)) === "approved") synced++;
+    } catch (err) {
+      console.error("[cron] rapprochement", p.providerTransactionId, err);
+    }
+  }
+  return { synced, failed };
+}
+
 // Tâche quotidienne : clôtures, relances d'échéances, rapprochement des paiements en attente, purge.
 export async function runDailyJobs(now = new Date()) {
   const completed = await completeEndedTutorings(now);
@@ -38,21 +69,7 @@ export async function runDailyJobs(now = new Date()) {
     reminders++;
   }
 
-  // Rattrapage des paiements dont le webhook aurait été perdu (transactions de moins de 7 jours).
-  let synced = 0;
-  if (fedapayConfigured()) {
-    const pending = await db.payment.findMany({
-      where: { status: "PENDING", createdAt: { gte: new Date(now.getTime() - 7 * DAY_MS), lte: new Date(now.getTime() - 10 * 60 * 1000) } },
-      select: { providerTransactionId: true },
-    });
-    for (const p of pending) {
-      try {
-        if ((await syncTransaction(p.providerTransactionId)) === "approved") synced++;
-      } catch (err) {
-        console.error("[cron] rapprochement", p.providerTransactionId, err);
-      }
-    }
-  }
+  const { synced } = await reconcilePendingPayments(now);
 
   // Reversements lancés mais non confirmés : rapprochement, puis alerte au-delà de 24 heures.
   let payoutsConfirmed = 0;

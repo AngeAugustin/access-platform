@@ -22,6 +22,12 @@ export async function peek(key: string): Promise<number> {
   return row && row.resetAt > new Date() ? row.count : 0;
 }
 
+// Fin de la fenêtre en cours, pour dire à l'utilisateur quand réessayer.
+export async function resetsAt(key: string): Promise<Date | null> {
+  const row = await db.rateLimit.findUnique({ where: { key } });
+  return row && row.resetAt > new Date() ? row.resetAt : null;
+}
+
 export async function reset(key: string): Promise<void> {
   await db.rateLimit.deleteMany({ where: { key } });
 }

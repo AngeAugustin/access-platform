@@ -20,3 +20,8 @@ export function installmentReference(): string {
 export function numericCode(length: number): string {
   return randomCode(length, "0123456789");
 }
+
+// Mot de passe provisoire lisible (lettres, chiffres) conforme aux règles de mot de passe.
+export function provisionalPassword(): string {
+  return `${randomCode(4, "ABCDEFGHJKMNPQRSTUVWXYZ")}-${randomCode(4, "23456789")}-${randomCode(4)}`;
+}

@@ -138,7 +138,7 @@ export function LessonForm({ tutoringId, childName, minDate, maxDate }: { tutori
             Date <span className="text-rose-500">*</span>
           </label>
           <input id="date" name="date" type="date" className="field" min={minDate} max={maxDate < todayIso() ? maxDate : todayIso()} defaultValue={maxDate < todayIso() ? maxDate : todayIso()} required />
-          {err("date") && <p className="mt-1.5 text-[13px] text-rose-600">{err("date")}</p>}
+          {err("date") && <p className="mt-1.5 text-13px text-rose-600">{err("date")}</p>}
         </div>
         <div>
           <label htmlFor="slot" className="label">
@@ -158,7 +158,7 @@ export function LessonForm({ tutoringId, childName, minDate, maxDate }: { tutori
           Travail effectué <span className="text-rose-500">*</span>
         </label>
         <textarea id="workDone" name="workDone" rows={4} className="field" required placeholder="Chapitres revus, exercices faits, devoirs donnés…" />
-        {err("workDone") && <p className="mt-1.5 text-[13px] text-rose-600">{err("workDone")}</p>}
+        {err("workDone") && <p className="mt-1.5 text-13px text-rose-600">{err("workDone")}</p>}
       </div>
       <div>
         <label htmlFor="observation" className="label">

@@ -5,7 +5,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypt
 // SHA-256("<sel>:<n>") commence par `bits` bits à zéro. Résoudre coûte quelques secondes de calcul
 // à un robot qui enchaîne les tentatives, et reste invisible pour une personne.
 
-export type PowPurpose = "login" | "register" | "forgot";
+export type PowPurpose = "login" | "register" | "forgot" | "contact";
 
 type Payload = { p: PowPurpose; s: string; b: number; e: number };
 

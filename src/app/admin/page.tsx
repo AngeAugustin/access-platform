@@ -51,7 +51,7 @@ export default async function AdminDashboard() {
     { n: payoutsPending._count, label: "Reversements à faire", hint: formatFcfa(payoutsPending._sum.netAmount ?? 0), href: "/admin/paiements", icon: HandCoins },
     { n: openComplaints, label: "Réclamations ouvertes", hint: "À traiter", href: "/admin/reclamations", icon: MessageSquareWarning },
     { n: disputed, label: "Séances contestées", hint: "À arbitrer", href: "/admin/tutorats?contestees=1", icon: Scale },
-    { n: overdue._count, label: "Échéances en retard", hint: formatFcfa(overdue._sum.amount ?? 0), href: "/admin/paiements#retards", icon: CalendarX },
+    { n: overdue._count, label: "Échéances en retard", hint: formatFcfa(overdue._sum.amount ?? 0), href: "/admin/paiements?onglet=retards", icon: CalendarX },
   ];
   const pendingCount = todo.reduce((s, t) => s + t.n, 0);
 

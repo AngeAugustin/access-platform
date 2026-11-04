@@ -6,15 +6,19 @@ import { TUTORING_STATUS } from "@/lib/constants";
 import { formatDate, fullName } from "@/lib/format";
 import { EmptyState, PageHeader, Table, Td, buttonClass } from "@/components/ui";
 import { TutoringBadge } from "@/components/status";
+import { Pagination } from "@/components/ui/pagination";
+import { paginate } from "@/lib/pagination";
 
 export const metadata = { title: "Tutorats" };
 
-export default async function AdminTutoringsPage({ searchParams }: { searchParams: Promise<{ statut?: string; contestees?: string }> }) {
+export default async function AdminTutoringsPage({ searchParams }: { searchParams: Promise<{ statut?: string; contestees?: string; page?: string }> }) {
   await requireRole("ADMIN");
-  const { statut, contestees } = await searchParams;
+  const { statut, contestees, page } = await searchParams;
   const status = statut && statut in TUTORING_STATUS ? (statut as keyof typeof TUTORING_STATUS) : undefined;
+  const where = { ...(status ? { status } : {}), ...(contestees ? { lessons: { some: { status: "DISPUTED" as const } } } : {}) };
+  const info = paginate(await db.tutoring.count({ where }), page);
   const tutorings = await db.tutoring.findMany({
-    where: { ...(status ? { status } : {}), ...(contestees ? { lessons: { some: { status: "DISPUTED" } } } : {}) },
+    where,
     include: {
       child: true,
       parent: true,
@@ -23,11 +27,12 @@ export default async function AdminTutoringsPage({ searchParams }: { searchParam
       lessons: { where: { status: "DISPUTED" }, select: { id: true } },
     },
     orderBy: { startDate: "desc" },
-    take: 300,
+    skip: info.skip,
+    take: info.take,
   });
   return (
     <>
-      <PageHeader title="Tutorats" />
+      <PageHeader title="Tutorats" subtitle={`${info.total} tutorat${info.total > 1 ? "s" : ""}`} />
       <form method="get" className="mb-4 flex flex-wrap gap-2">
         <select name="statut" defaultValue={statut ?? ""} className="field w-auto min-w-48" aria-label="Statut">
           <option value="">Tous les statuts</option>
@@ -72,6 +77,7 @@ export default async function AdminTutoringsPage({ searchParams }: { searchParam
           ))}
         </Table>
       )}
+      <Pagination info={info} path="/admin/tutorats" params={{ statut, contestees }} label="tutorat" />
     </>
   );
 }

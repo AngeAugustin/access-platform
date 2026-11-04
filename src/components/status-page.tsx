@@ -12,7 +12,7 @@ export function StatusPage({ icon: Icon, code, title, children, action }: { icon
       </span>
       {code && <p className="mt-6 text-sm font-semibold text-brand-600">{code}</p>}
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">{title}</h1>
-      {children && <div className="mt-2 max-w-sm text-[15px] text-slate-500">{children}</div>}
+      {children && <div className="mt-2 max-w-sm text-15px text-slate-500">{children}</div>}
       {action && <div className="mt-8">{action}</div>}
     </div>
   );

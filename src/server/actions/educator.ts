@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import type { DocumentType } from "@/generated/prisma/client";
@@ -8,56 +9,107 @@ import { requireRole } from "@/lib/auth/dal";
 import { audit } from "@/lib/audit";
 import { rateLimit } from "@/lib/rate-limit";
 import { DOCUMENT_TYPES, REQUIRED_DOCUMENTS } from "@/lib/constants";
+import { activeClasses, activeSubjects, cycleOfClass } from "@/lib/curriculum";
 import { formatDate, fullName } from "@/lib/format";
-import { type ActionState, educatorProfileSchema, fieldErrors, lessonSchema } from "@/lib/validation";
+import { DOSSIER_STEPS, dossierProgress } from "@/lib/educator-dossier";
+import { type ActionState, dossierStepSchemas, fieldErrors, lessonSchema } from "@/lib/validation";
 import { deleteStoredFile, storeUpload } from "@/server/services/storage";
 import { notify, notifyAdmins } from "@/server/services/notify";
 import { slotLabel } from "@/server/services/tutoring";
+import { getCurriculum } from "@/server/queries/curriculum";
 
 async function currentProfile(userId: string) {
   return db.educatorProfile.upsert({ where: { userId }, create: { userId }, update: {} });
 }
 
-export async function saveEducatorProfileAction(_: ActionState, formData: FormData): Promise<ActionState> {
+// Enregistre une étape du dossier puis passe à la suivante.
+export async function saveDossierStepAction(_: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireRole("EDUCATOR");
   const profile = await currentProfile(user.id);
-  const availabilities = formData
-    .getAll("availabilities")
-    .filter((v): v is string => typeof v === "string")
-    .map((v) => {
-      const [day, slot] = v.split("|");
-      return { day, slot };
-    });
-  const parsed = educatorProfileSchema.safeParse({
-    ...Object.fromEntries(formData),
-    subjects: formData.getAll("subjects"),
-    classLevels: formData.getAll("classLevels"),
-    availabilities,
-  });
-  if (!parsed.success) return fieldErrors(parsed.error);
-  const { availabilities: slots, ...data } = parsed.data;
+  const index = DOSSIER_STEPS.findIndex((s) => s.key === formData.get("step"));
+  const step = DOSSIER_STEPS[index]?.key;
+  // Un dossier refusé repasse « à compléter » dès qu'il est corrigé.
+  const status = profile.status === "REJECTED" ? "INCOMPLETE" : profile.status;
+  const values = Object.fromEntries(formData);
 
-  // Un créneau réservé par une famille ne peut pas être retiré tant que le tutorat est en cours.
-  const booked = await db.bookedSlot.findMany({ where: { educatorId: profile.id } });
-  const removedBooked = booked.filter((b) => !slots.some((s) => s.day === b.day && s.slot === b.slot));
-  if (removedBooked.length > 0) {
-    return {
-      ok: false,
-      errors: { availabilities: [`${removedBooked.map((b) => slotLabel(b.day, b.slot)).join(", ")} : créneau(x) réservé(s), impossible de le(s) retirer.`] },
-    };
+  if (step === "profil") {
+    const parsed = dossierStepSchemas.profil.safeParse(values);
+    if (!parsed.success) return fieldErrors(parsed.error);
+    await db.educatorProfile.update({ where: { id: profile.id }, data: { ...parsed.data, bio: parsed.data.bio ?? null, status } });
+  } else if (step === "parcours") {
+    const parsed = dossierStepSchemas.parcours.safeParse(values);
+    if (!parsed.success) {
+      // « Expérience 2 : le poste est obligatoire » plutôt qu'un message sans repère.
+      const result = fieldErrors(parsed.error);
+      const rows = parsed.error.issues
+        .filter((i) => i.path[0] === "experiences" && typeof i.path[1] === "number")
+        .map((i) => `Expérience ${Number(i.path[1]) + 1} : ${i.message}`);
+      if (rows.length > 0) result.errors = { ...result.errors, experiences: rows };
+      return result;
+    }
+    const d = parsed.data;
+    await db.educatorProfile.update({
+      where: { id: profile.id },
+      data: {
+        ...d,
+        degreeSchool: d.degreeSchool ?? null,
+        degreeYear: d.degreeYear ?? null,
+        occupationPlace: d.occupationPlace ?? null,
+        achievements: d.achievements ?? null,
+        status,
+      },
+    });
+  } else if (step === "cours") {
+    const availabilities = formData
+      .getAll("availabilities")
+      .filter((v): v is string => typeof v === "string")
+      .map((v) => {
+        const [day, slot] = v.split("|");
+        return { day, slot };
+      });
+    const parsed = dossierStepSchemas.cours.safeParse({ cycles: formData.getAll("cycles"), subjects: formData.getAll("subjects"), classLevels: formData.getAll("classLevels"), availabilities });
+    if (!parsed.success) return fieldErrors(parsed.error);
+    const { availabilities: slots, ...data } = parsed.data;
+
+    // Seules les classes et matières actives du référentiel peuvent être choisies.
+    const curriculum = await getCurriculum();
+    const classes = activeClasses(curriculum);
+    const subjects = activeSubjects(curriculum).map((s) => s.key);
+    if (data.classLevels.some((c) => !classes.includes(c))) return { ok: false, errors: { classLevels: ["Classe invalide."] } };
+    // Chaque cycle coché doit compter au moins une classe, et chaque classe relever d'un cycle coché.
+    if (data.classLevels.some((c) => !(data.cycles as string[]).includes(cycleOfClass(curriculum, c) ?? ""))) {
+      return { ok: false, errors: { classLevels: ["Une classe choisie ne fait pas partie des cycles cochés."] } };
+    }
+    const empty = data.cycles.filter((cycle) => !data.classLevels.some((c) => cycleOfClass(curriculum, c) === cycle));
+    if (empty.length > 0) return { ok: false, errors: { classLevels: [`Choisissez au moins une classe en ${empty.join(", ")}, ou décochez ce cycle.`] } };
+    if (data.subjects.some((s) => !subjects.includes(s))) return { ok: false, errors: { subjects: ["Matière invalide."] } };
+
+    // Un créneau réservé par une famille ne peut pas être retiré tant que le tutorat est en cours.
+    const booked = await db.bookedSlot.findMany({ where: { educatorId: profile.id } });
+    const removedBooked = booked.filter((b) => !slots.some((s) => s.day === b.day && s.slot === b.slot));
+    if (removedBooked.length > 0) {
+      return {
+        ok: false,
+        errors: { availabilities: [`${removedBooked.map((b) => slotLabel(b.day, b.slot)).join(", ")} : créneau(x) réservé(s), impossible de le(s) retirer.`] },
+      };
+    }
+
+    await db.$transaction([
+      db.educatorProfile.update({ where: { id: profile.id }, data: { ...data, status } }),
+      db.availability.deleteMany({ where: { educatorId: profile.id } }),
+      db.availability.createMany({ data: slots.map((s) => ({ ...s, educatorId: profile.id })) }),
+    ]);
+  } else if (step === "garants") {
+    const parsed = dossierStepSchemas.garants.safeParse(values);
+    if (!parsed.success) return fieldErrors(parsed.error);
+    await db.educatorProfile.update({ where: { id: profile.id }, data: { ...parsed.data, status } });
+  } else {
+    return { ok: false, message: "Étape inconnue." };
   }
 
-  await db.$transaction([
-    db.educatorProfile.update({
-      where: { id: profile.id },
-      data: { ...data, bio: data.bio ?? null, status: profile.status === "REJECTED" ? "INCOMPLETE" : profile.status },
-    }),
-    db.availability.deleteMany({ where: { educatorId: profile.id } }),
-    db.availability.createMany({ data: slots.map((s) => ({ ...s, educatorId: profile.id })) }),
-  ]);
-  await audit(user.id, "educator.profile_saved", "EducatorProfile", profile.id);
+  await audit(user.id, "educator.profile_saved", "EducatorProfile", profile.id, { step });
   revalidatePath("/educateur");
-  return { ok: true, message: "Dossier enregistré." };
+  redirect(`/educateur/dossier?etape=${DOSSIER_STEPS[index + 1].key}`);
 }
 
 export async function uploadDocumentAction(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -101,12 +153,8 @@ export async function submitProfileAction(): Promise<ActionState> {
   });
   if (!profile) return { ok: false, message: "Complétez d'abord votre dossier." };
   if (profile.status === "SUBMITTED" || profile.status === "VALIDATED") return { ok: false, message: "Dossier déjà transmis." };
-  const missing: string[] = [];
-  if (!profile.background || !profile.birthDate || !profile.guarantor1Name || !profile.guarantor2Name || !profile.payoutPhone) {
-    missing.push("informations du dossier");
-  }
-  if (profile.subjects.length === 0 || profile.classLevels.length === 0) missing.push("matières et classes");
-  if (profile._count.availabilities === 0) missing.push("disponibilités");
+  const progress = dossierProgress({ ...profile, availabilityCount: profile._count.availabilities, documentTypes: profile.documents.map((d) => d.type) });
+  const missing: string[] = DOSSIER_STEPS.filter((s) => s.key !== "pieces" && !progress[s.key]).map((s) => `étape « ${s.label} »`);
   for (const t of REQUIRED_DOCUMENTS) if (!profile.documents.some((d) => d.type === t)) missing.push(DOCUMENT_TYPES[t].toLowerCase());
   if (missing.length > 0) return { ok: false, message: `Il manque : ${missing.join(", ")}.` };
 

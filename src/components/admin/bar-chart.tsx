@@ -8,7 +8,7 @@ export function MonthlyBars({ data, format = (v: number) => String(v) }: { data:
     <div className="flex h-52 items-stretch gap-3" role="img" aria-label={data.map((d) => `${d.label} : ${format(d.value)}`).join(", ")}>
       {data.map((d, i) => (
         <div key={d.label} className="flex flex-1 flex-col items-center gap-1.5">
-          <span className="h-4 text-[11px] font-medium text-slate-500 tabular-nums">{d.value ? format(d.value) : ""}</span>
+          <span className="h-4 text-11px font-medium text-slate-500 tabular-nums">{d.value ? format(d.value) : ""}</span>
           <div className="relative w-full max-w-10 flex-1 border-b border-slate-200">
             <div
               className={cx(
@@ -18,7 +18,7 @@ export function MonthlyBars({ data, format = (v: number) => String(v) }: { data:
               )}
             />
           </div>
-          <span className="text-[11px] text-slate-400">{d.label}</span>
+          <span className="text-11px text-slate-400">{d.label}</span>
         </div>
       ))}
     </div>

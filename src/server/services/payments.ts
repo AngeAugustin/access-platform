@@ -4,12 +4,17 @@ import { splitCommission } from "@/lib/billing";
 import { formatFcfa, fullName } from "@/lib/format";
 import { audit } from "@/lib/audit";
 import { BusinessError } from "./tutoring";
-import { createAndStartPayout, createTransaction, getPayout, getTransaction } from "./fedapay";
+import { type FedapayTransaction, createAndStartPayout, createTransaction, getPayout, getTransaction, payoutModeFor } from "./fedapay";
 import { payoutOutcome } from "@/lib/payout-status";
 import { getSettings } from "./settings";
 import { notify, notifyAdmins } from "./notify";
 
-// Lance le paiement d'une échéance : crée la transaction FedaPay et renvoie l'URL de paiement.
+// Un lien de paiement FedaPay encore ouvert est réutilisé pendant ce délai plutôt que d'en créer un nouveau.
+const REUSE_WINDOW_MS = 30 * 60 * 1000;
+
+// Lance le paiement d'une échéance et renvoie l'URL de paiement FedaPay.
+// La tentative est enregistrée avant l'appel : si FedaPay échoue, elle passe en échec avec la raison ;
+// si le webhook arrive avant la fin de l'enregistrement, l'identifiant de tentative des métadonnées suffit à la retrouver.
 export async function startInstallmentPayment(installmentId: string, parentId: string): Promise<string> {
   const installment = await db.installment.findFirst({
     where: { id: installmentId, tutoring: { parentId } },
@@ -19,25 +24,67 @@ export async function startInstallmentPayment(installmentId: string, parentId: s
   if (installment.status !== "PENDING") throw new BusinessError("Cette échéance n'est plus à payer.");
   if (installment.amount <= 0) throw new BusinessError("Montant invalide.");
 
-  const parent = await db.user.findUniqueOrThrow({ where: { id: parentId } });
-  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
-  const tx = await createTransaction({
-    amount: installment.amount,
-    description: `Access ${installment.reference} — ${fullName(installment.tutoring.child)}`,
-    callbackUrl: `${appUrl}/parent/paiements/retour`,
-    customer: { firstname: parent.firstName, lastname: parent.lastName, email: parent.email, phone: parent.phone },
-    metadata: { installmentId: installment.id, reference: installment.reference },
-  });
-  await db.payment.create({
-    data: {
+  // Double clic, retour arrière ou nouvel onglet : le lien déjà ouvert est resynchronisé puis réutilisé.
+  const open = await db.payment.findFirst({
+    where: {
       installmentId: installment.id,
       payerId: parentId,
+      status: "PENDING",
       amount: installment.amount,
-      providerTransactionId: String(tx.id),
+      providerTransactionId: { not: null },
+      paymentUrl: { not: null },
+      createdAt: { gte: new Date(Date.now() - REUSE_WINDOW_MS) },
     },
+    orderBy: { createdAt: "desc" },
+  });
+  if (open?.providerTransactionId && open.paymentUrl) {
+    const state = await syncTransaction(open.providerTransactionId).catch(() => "pending" as const);
+    if (state === "approved" || state === "already") throw new BusinessError("Cette échéance vient d'être payée.");
+    if (state === "pending") return open.paymentUrl;
+  }
+
+  const parent = await db.user.findUniqueOrThrow({ where: { id: parentId } });
+  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+  const payment = await db.payment.create({
+    data: { installmentId: installment.id, payerId: parentId, amount: installment.amount },
+  });
+  let tx: { id: number; url: string };
+  try {
+    tx = await createTransaction({
+      amount: installment.amount,
+      description: `Access ${installment.reference} — ${fullName(installment.tutoring.child)}`,
+      callbackUrl: `${appUrl}/parent/paiements/retour`,
+      customer: { firstname: parent.firstName, lastname: parent.lastName, email: parent.email, phone: parent.phone },
+      metadata: { paymentId: payment.id, installmentId: installment.id, reference: installment.reference },
+    });
+  } catch (err) {
+    await db.payment.update({
+      where: { id: payment.id },
+      data: { status: "FAILED", statusReason: (err instanceof Error ? err.message : "Erreur inconnue").slice(0, 300) },
+    });
+    throw err;
+  }
+  // Le webhook a pu rattacher la transaction entre-temps : on ne touche qu'à une tentative encore sans transaction.
+  await db.payment.updateMany({
+    where: { id: payment.id, providerTransactionId: null },
+    data: { providerTransactionId: String(tx.id), paymentUrl: tx.url },
   });
   await audit(parentId, "payment.start", "Installment", installment.id, { transactionId: tx.id });
   return tx.url;
+}
+
+// Retrouve la tentative d'une transaction. Si le lien n'est pas encore enregistré (webhook arrivé avant la fin
+// de l'initialisation), on le rétablit grâce à l'identifiant de tentative transmis dans les métadonnées FedaPay.
+async function paymentForTransaction(transactionId: string, remote?: FedapayTransaction) {
+  const include = { installment: { include: { tutoring: { include: { child: true, educator: true } } } } } as const;
+  const linked = await db.payment.findUnique({ where: { providerTransactionId: transactionId }, include });
+  if (linked) return { payment: linked, remote };
+  const fetched = remote ?? (await getTransaction(transactionId));
+  const paymentId = fetched.custom_metadata?.paymentId;
+  if (typeof paymentId !== "string" || paymentId.length > 40) return { payment: null, remote: fetched };
+  const attached = await db.payment.updateMany({ where: { id: paymentId, providerTransactionId: null }, data: { providerTransactionId: transactionId } });
+  if (attached.count === 0) return { payment: null, remote: fetched };
+  return { payment: await db.payment.findUnique({ where: { id: paymentId }, include }), remote: fetched };
 }
 
 export type SyncResult = "approved" | "already" | "declined" | "pending" | "unknown" | "mismatch";
@@ -45,14 +92,12 @@ export type SyncResult = "approved" | "already" | "declined" | "pending" | "unkn
 // Rapproche une transaction FedaPay avec la base. Idempotent : peut être appelé par le webhook,
 // par la page de retour et par la tâche quotidienne sans risque de double comptabilisation.
 export async function syncTransaction(transactionId: string): Promise<SyncResult> {
-  const payment = await db.payment.findUnique({
-    where: { providerTransactionId: transactionId },
-    include: { installment: { include: { tutoring: { include: { child: true, educator: true } } } } },
-  });
+  const found = await paymentForTransaction(transactionId);
+  const payment = found.payment;
   if (!payment) return "unknown";
   if (payment.status === "APPROVED") return "already";
 
-  const remote = await getTransaction(transactionId);
+  const remote = found.remote ?? (await getTransaction(transactionId));
 
   if (remote.status === "declined" || remote.status === "canceled") {
     await db.payment.updateMany({
@@ -65,6 +110,12 @@ export async function syncTransaction(transactionId: string): Promise<SyncResult
 
   const { installment } = payment;
   if (remote.amount !== installment.amount || payment.amount !== installment.amount) {
+    // Signalée une seule fois : les rapprochements suivants ne renotifient pas les administrateurs.
+    const flagged = await db.payment.updateMany({
+      where: { id: payment.id, anomaly: null },
+      data: { anomaly: "AMOUNT_MISMATCH", statusReason: `Montant payé ${formatFcfa(remote.amount)}, attendu ${formatFcfa(installment.amount)}.` },
+    });
+    if (flagged.count === 0) return "mismatch";
     await audit(null, "payment.amount_mismatch", "Payment", payment.id, {
       expected: installment.amount,
       paid: remote.amount,
@@ -74,7 +125,7 @@ export async function syncTransaction(transactionId: string): Promise<SyncResult
       type: "payment.mismatch",
       title: "Paiement à vérifier",
       body: `La transaction ${transactionId} (${formatFcfa(remote.amount)}) ne correspond pas au montant de l'échéance ${installment.reference} (${formatFcfa(installment.amount)}).`,
-      link: `/admin/paiements`,
+      link: `/admin/paiements?onglet=anomalies`,
     });
     return "mismatch";
   }
@@ -92,7 +143,10 @@ export async function syncTransaction(transactionId: string): Promise<SyncResult
       data: { status: "PAID", paidAt: new Date() },
     });
     // Échéance déjà réglée par une autre transaction : double paiement à rembourser.
-    if (paid.count === 0) return "duplicate" as const;
+    if (paid.count === 0) {
+      await tx.payment.update({ where: { id: payment.id }, data: { anomaly: "DUPLICATE" } });
+      return "duplicate" as const;
+    }
     await tx.payout.create({
       data: { installmentId: installment.id, educatorId: installment.tutoring.educatorId, ...split },
     });
@@ -105,7 +159,7 @@ export async function syncTransaction(transactionId: string): Promise<SyncResult
       type: "payment.duplicate",
       title: "Double paiement",
       body: `L'échéance ${installment.reference} a été payée deux fois (transaction ${transactionId}). Un remboursement est à prévoir.`,
-      link: `/admin/paiements`,
+      link: `/admin/paiements?onglet=anomalies`,
     });
     return "already";
   }
@@ -167,6 +221,7 @@ export async function executeFedapayPayout(payoutId: string, adminId: string) {
     const { user } = payout.educator;
     const result = await createAndStartPayout({
       amount: payout.netAmount,
+      mode: payoutModeFor(payout.educator.payoutOperator),
       customer: { firstname: user.firstName, lastname: user.lastName, email: user.email, phone },
     });
     providerId = result.id;

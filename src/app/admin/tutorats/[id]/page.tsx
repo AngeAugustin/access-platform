@@ -34,7 +34,15 @@ export default async function AdminTutoringPage({ params }: { params: Promise<{ 
           <DefinitionList
             items={[
               ["Statut", <TutoringBadge key="s" status={t.status} />],
-              ["Élève", `${fullName(t.child)} (${t.classLevel})`],
+              [
+                "Élève",
+                <span key="c">
+                  <Link href={`/admin/eleves/${t.childId}`} className="font-medium text-brand-700 hover:text-brand-800">
+                    {fullName(t.child)}
+                  </Link>{" "}
+                  ({t.classLevel})
+                </span>,
+              ],
               ["Parent", <Link key="p" href={`/admin/parents/${t.parentId}`} className="font-medium text-brand-700 hover:text-brand-800">{fullName(t.parent)}</Link>],
               ["Éducateur", <Link key="e" href={`/admin/educateurs/${t.educatorId}`} className="font-medium text-brand-700 hover:text-brand-800">{fullName(t.educator.user)}</Link>],
               ["Période", `${formatDate(t.startDate)} → ${formatDate(t.endDate)} (${t.durationWeeks} sem.)`],

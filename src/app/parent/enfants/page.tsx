@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { ChevronRight, Plus, School, Smile } from "lucide-react";
+import { ChevronRight, Plus, Smile } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { fullName } from "@/lib/format";
-import { Badge, EmptyState, LinkButton, PageHeader } from "@/components/ui";
+import { EmptyState, LinkButton, cx } from "@/components/ui";
 import { Avatar } from "@/components/avatar";
+import { ScreenTitle, panel, roundIcon } from "@/components/parent/kit";
 
 export const metadata = { title: "Mes enfants" };
 
@@ -17,13 +18,15 @@ export default async function ChildrenPage() {
   });
   return (
     <>
-      <PageHeader
+      <ScreenTitle
+        eyebrow="Leur fiche aide l'éducateur à préparer les séances"
         title="Mes enfants"
-        subtitle="Leur fiche scolaire aide l'éducateur à préparer les séances."
         action={
-          <LinkButton href="/parent/enfants/nouveau">
-            <Plus aria-hidden /> Inscrire un enfant
-          </LinkButton>
+          children.length > 0 && (
+            <Link href="/parent/enfants/nouveau" className={cx(roundIcon, "bg-white text-ink shadow-[0_0_0_1px_rgb(15_23_42/0.07)] hover:bg-slate-50")} aria-label="Inscrire un enfant">
+              <Plus className="size-5" strokeWidth={1.9} aria-hidden />
+            </Link>
+          )
         }
       />
       {children.length === 0 ? (
@@ -31,25 +34,27 @@ export default async function ChildrenPage() {
           Commencez par sa classe et son niveau dans chaque matière.
         </EmptyState>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {children.map((c) => (
             <li key={c.id}>
-              <Link href={`/parent/enfants/${c.id}`} className="group flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft transition hover:border-brand-200 hover:shadow-lift">
-                <div className="flex items-center gap-3">
-                  <Avatar name={fullName(c)} size={48} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-ink">{fullName(c)}</p>
-                    <p className="text-sm text-slate-500">{c.currentClass}</p>
-                  </div>
-                  <ChevronRight className="size-4 text-slate-300 transition group-hover:text-brand-500" aria-hidden />
-                </div>
-                <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-[13px]">
-                  <span className="flex min-w-0 items-center gap-1.5 text-slate-500">
-                    <School className="size-3.5 shrink-0" aria-hidden />
-                    <span className="truncate">{c.currentSchool ?? "École non précisée"}</span>
+              <Link href={`/parent/enfants/${c.id}`} className={cx(panel, "group flex items-center gap-3.5 p-4 transition hover:shadow-lift")}>
+                <Avatar name={fullName(c)} size={52} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-base font-semibold text-ink">{fullName(c)}</span>
+                  <span className="mt-0.5 block truncate text-13px text-slate-500">
+                    {c.currentClass}
+                    {c.currentSchool && ` · ${c.currentSchool}`}
                   </span>
-                  {c.tutorings.length > 0 ? <Badge tone="green">{c.tutorings.length} en cours</Badge> : <Badge>Aucun suivi</Badge>}
-                </div>
+                  <span
+                    className={cx(
+                      "mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                      c.tutorings.length > 0 ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500",
+                    )}
+                  >
+                    {c.tutorings.length > 0 ? `${c.tutorings.length} tutorat${c.tutorings.length > 1 ? "s" : ""} en cours` : "Aucun suivi"}
+                  </span>
+                </span>
+                <ChevronRight className="size-5 text-slate-300 transition group-hover:text-brand-500" aria-hidden />
               </Link>
             </li>
           ))}

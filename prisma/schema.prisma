@@ -20,43 +20,52 @@ enum Role {
   ADMIN
 }
 
+// SUSPENDED : sanction temporaire ; DEACTIVATED : compte fermé. Les deux interdisent la connexion.
 enum AccountStatus {
   ACTIVE
   SUSPENDED
+  DEACTIVATED
 }
 
 model User {
-  id             String        @id @default(cuid())
-  npi            String        @unique
-  email          String        @unique
-  phone          String        @unique
-  firstName      String
-  lastName       String
-  passwordHash   String
-  role           Role
-  isSuperAdmin   Boolean       @default(false)
-  status         AccountStatus @default(ACTIVE)
-  address        String?
-  city           String?
-  lastLoginAt    DateTime?
-  acceptedTermsAt DateTime?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                 String        @id @default(cuid())
+  npi                String        @unique
+  email              String        @unique
+  phone              String        @unique
+  firstName          String
+  lastName           String
+  passwordHash       String
+  role               Role
+  isSuperAdmin       Boolean       @default(false)
+  status             AccountStatus @default(ACTIVE)
+  // Échecs de connexion consécutifs ; au 5e, le compte est verrouillé 24 h (seul un administrateur peut le lever avant).
+  failedLogins       Int           @default(0)
+  lockedUntil        DateTime?
+  // Mot de passe provisoire fixé par un administrateur : à remplacer à la prochaine connexion.
+  mustChangePassword Boolean       @default(false)
+  address            String?
+  city               String?
+  lastLoginAt        DateTime?
+  acceptedTermsAt    DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
-  sessions          Session[]
-  resetTokens       PasswordResetToken[]
-  educatorProfile   EducatorProfile?
-  children          Child[]
-  parentTutorings   Tutoring[]          @relation("ParentTutorings")
-  complaints        Complaint[]         @relation("ComplaintAuthor")
-  handledComplaints Complaint[]         @relation("ComplaintHandler")
-  notifications     Notification[]
-  pushSubscriptions PushSubscription[]
-  payments          Payment[]
-  reviews           Review[]
-  auditLogs         AuditLog[]
-  executedPayouts   Payout[]            @relation("PayoutExecutor")
-  validatedProfiles EducatorProfile[]   @relation("ProfileValidator")
+  sessions             Session[]
+  resetTokens          PasswordResetToken[]
+  educatorProfile      EducatorProfile?
+  children             Child[]
+  parentTutorings      Tutoring[]           @relation("ParentTutorings")
+  complaints           Complaint[]          @relation("ComplaintAuthor")
+  handledComplaints    Complaint[]          @relation("ComplaintHandler")
+  notifications        Notification[]
+  pushSubscriptions    PushSubscription[]
+  payments             Payment[]            @relation("PaymentPayer")
+  resolvedPayments     Payment[]            @relation("PaymentAnomalyResolver")
+  refundedInstallments Installment[]        @relation("InstallmentRefunder")
+  reviews              Review[]
+  auditLogs            AuditLog[]
+  executedPayouts      Payout[]             @relation("PayoutExecutor")
+  validatedProfiles    EducatorProfile[]    @relation("ProfileValidator")
 }
 
 // Session côté serveur : le cookie ne contient qu'un jeton opaque, la base n'en stocke que l'empreinte SHA-256.
@@ -67,6 +76,8 @@ model Session {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt  DateTime
   lastUsedAt DateTime @default(now())
+  // false : « Rester connecté » décoché, la session s'arrête à la fermeture du navigateur.
+  persistent Boolean  @default(true)
   ip         String?
   userAgent  String?
   createdAt  DateTime @default(now())
@@ -112,6 +123,12 @@ model AuditLog {
 // Éducateurs
 // ---------------------------------------------------------------------------
 
+// Opérateur Mobile Money des reversements à l'éducateur.
+enum MobileOperator {
+  MTN
+  MOOV
+}
+
 enum ProfileStatus {
   INCOMPLETE
   SUBMITTED
@@ -145,34 +162,47 @@ enum TimeSlot {
 }
 
 model EducatorProfile {
-  id                 String        @id @default(cuid())
-  userId             String        @unique
-  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  birthDate          DateTime?
-  maritalStatus      String?
-  experienceYears    Int?
-  background         String?
-  bio                String?
-  subjects           String[]
-  classLevels        String[]
-  zone               String?
-  guarantor1Name     String?
-  guarantor1Address  String?
-  guarantor1Phone    String?
-  guarantor2Name     String?
-  guarantor2Address  String?
-  guarantor2Phone    String?
-  payoutPhone        String?
-  status             ProfileStatus @default(INCOMPLETE)
-  level              String?
-  stars              Int?
-  rejectionReason    String?
-  submittedAt        DateTime?
-  validatedAt        DateTime?
-  validatedById      String?
-  validatedBy        User?         @relation("ProfileValidator", fields: [validatedById], references: [id], onDelete: SetNull)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  id                String          @id @default(cuid())
+  userId            String          @unique
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  birthDate         DateTime?
+  maritalStatus     String?
+  experienceYears   Int?
+  // Texte libre des anciens dossiers ; remplacé par le parcours détaillé ci-dessous.
+  background        String?
+  degreeLevel       String?
+  degreeField       String?
+  degreeSchool      String?
+  degreeYear        Int?
+  occupation        String?
+  occupationPlace   String?
+  // Expériences d'enseignement : [{ place, role, from, to? }].
+  experiences       Json?
+  achievements      String?
+  bio               String?
+  subjects          String[]
+  // Cycles choisis par l'éducateur, modifiables par l'administrateur à la validation.
+  cycles            String[]        @default([])
+  classLevels       String[]
+  zone              String?
+  guarantor1Name    String?
+  guarantor1Address String?
+  guarantor1Phone   String?
+  guarantor2Name    String?
+  guarantor2Address String?
+  guarantor2Phone   String?
+  payoutPhone       String?
+  payoutOperator    MobileOperator?
+  status            ProfileStatus   @default(INCOMPLETE)
+  level             String?
+  stars             Int?
+  rejectionReason   String?
+  submittedAt       DateTime?
+  validatedAt       DateTime?
+  validatedById     String?
+  validatedBy       User?           @relation("ProfileValidator", fields: [validatedById], references: [id], onDelete: SetNull)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   documents      EducatorDocument[]
   availabilities Availability[]
@@ -225,10 +255,10 @@ enum SubjectLevelValue {
 }
 
 model Child {
-  id               String         @id @default(cuid())
+  id               String   @id @default(cuid())
   parentId         String
-  parent           User           @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  npi              String?        @unique
+  parent           User     @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  npi              String?  @unique
   firstName        String
   lastName         String
   sex              Sex
@@ -239,8 +269,8 @@ model Child {
   currentSchool    String?
   favoriteSubjects String?
   interests        String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   subjectLevels SubjectLevel[]
   tutorings     Tutoring[]
@@ -256,6 +286,47 @@ model SubjectLevel {
   level   SubjectLevelValue
 
   @@unique([childId, subject])
+}
+
+// ---------------------------------------------------------------------------
+// Référentiel scolaire, géré depuis l'administration
+// ---------------------------------------------------------------------------
+
+// Les autres tables désignent une classe par son nom et une matière par sa clé (texte) :
+// renommer une classe met ces valeurs à jour ; la clé d'une matière ne change jamais.
+// Une classe ou une matière désactivée n'est plus proposée, mais les données existantes restent lisibles.
+model ClassLevel {
+  id        String              @id @default(cuid())
+  name      String              @unique
+  position  Int
+  // Primaire, Secondaire 1 ou Secondaire 2 (voir CYCLES dans src/lib/constants.ts).
+  cycle     String              @default("Secondaire 1")
+  active    Boolean             @default(true)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  subjects  ClassLevelSubject[]
+}
+
+model Subject {
+  id          String              @id @default(cuid())
+  key         String              @unique
+  label       String
+  position    Int
+  active      Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  classLevels ClassLevelSubject[]
+}
+
+// Matières évaluées dans une classe (niveau de l'enfant renseigné par le parent).
+model ClassLevelSubject {
+  classLevelId String
+  classLevel   ClassLevel @relation(fields: [classLevelId], references: [id], onDelete: Cascade)
+  subjectId    String
+  subject      Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@id([classLevelId, subjectId])
+  @@index([subjectId])
 }
 
 // ---------------------------------------------------------------------------
@@ -332,17 +403,17 @@ enum LessonStatus {
 }
 
 model Lesson {
-  id             String       @id @default(cuid())
-  tutoringId     String
-  tutoring       Tutoring     @relation(fields: [tutoringId], references: [id], onDelete: Cascade)
-  date           DateTime     @db.Date
-  slot           TimeSlot
-  workDone       String
-  observation    String?
-  status         LessonStatus @default(RECORDED)
-  parentComment  String?
-  confirmedAt    DateTime?
-  createdAt      DateTime     @default(now())
+  id            String       @id @default(cuid())
+  tutoringId    String
+  tutoring      Tutoring     @relation(fields: [tutoringId], references: [id], onDelete: Cascade)
+  date          DateTime     @db.Date
+  slot          TimeSlot
+  workDone      String
+  observation   String?
+  status        LessonStatus @default(RECORDED)
+  parentComment String?
+  confirmedAt   DateTime?
+  createdAt     DateTime     @default(now())
 
   @@unique([tutoringId, date, slot])
   @@index([tutoringId])
@@ -374,19 +445,25 @@ enum InstallmentStatus {
 }
 
 model Installment {
-  id         String            @id @default(cuid())
-  tutoringId String
-  tutoring   Tutoring          @relation(fields: [tutoringId], references: [id], onDelete: Cascade)
-  index      Int
-  weeks      Int
-  amount     Int
-  dueDate    DateTime
-  status     InstallmentStatus @default(PENDING)
-  reference  String            @unique
-  paidAt     DateTime?
-  remindedAt DateTime?
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
+  id           String            @id @default(cuid())
+  tutoringId   String
+  tutoring     Tutoring          @relation(fields: [tutoringId], references: [id], onDelete: Cascade)
+  index        Int
+  weeks        Int
+  amount       Int
+  dueDate      DateTime
+  status       InstallmentStatus @default(PENDING)
+  reference    String            @unique
+  paidAt       DateTime?
+  remindedAt   DateTime?
+  // Arrêt anticipé après paiement : part des semaines non effectuées à rembourser au parent.
+  refundAmount Int?
+  refundedAt   DateTime?
+  refundedById String?
+  refundedBy   User?             @relation("InstallmentRefunder", fields: [refundedById], references: [id], onDelete: SetNull)
+  refundNote   String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
   payments Payment[]
   payout   Payout?
@@ -400,24 +477,40 @@ enum PaymentStatus {
   APPROVED
   DECLINED
   CANCELLED
+  FAILED
+}
+
+// Incohérence relevée au rapprochement, à traiter par un administrateur.
+enum PaymentAnomaly {
+  AMOUNT_MISMATCH
+  DUPLICATE
 }
 
 // Encaissement parent via FedaPay. Une échéance peut avoir plusieurs tentatives, une seule approuvée.
+// La tentative est enregistrée avant l'appel à FedaPay : son identifiant voyage dans les métadonnées de la transaction.
 model Payment {
-  id                    String        @id @default(cuid())
+  id                    String          @id @default(cuid())
   installmentId         String
-  installment           Installment   @relation(fields: [installmentId], references: [id], onDelete: Restrict)
+  installment           Installment     @relation(fields: [installmentId], references: [id], onDelete: Restrict)
   payerId               String
-  payer                 User          @relation(fields: [payerId], references: [id], onDelete: Restrict)
+  payer                 User            @relation("PaymentPayer", fields: [payerId], references: [id], onDelete: Restrict)
   amount                Int
-  provider              String        @default("fedapay")
-  providerTransactionId String        @unique
-  status                PaymentStatus @default(PENDING)
+  provider              String          @default("fedapay")
+  providerTransactionId String?         @unique
+  paymentUrl            String?
+  status                PaymentStatus   @default(PENDING)
+  statusReason          String?
   approvedAt            DateTime?
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
+  anomaly               PaymentAnomaly?
+  anomalyResolvedAt     DateTime?
+  anomalyResolvedById   String?
+  anomalyResolvedBy     User?           @relation("PaymentAnomalyResolver", fields: [anomalyResolvedById], references: [id], onDelete: SetNull)
+  anomalyNote           String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
   @@index([installmentId])
+  @@index([anomaly, anomalyResolvedAt])
 }
 
 enum PayoutStatus {

@@ -7,7 +7,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { requireRole } from "@/lib/auth/dal";
 import { audit } from "@/lib/audit";
 import { rateLimit } from "@/lib/rate-limit";
-import { subjectsForClass } from "@/lib/constants";
+import { subjectsForClass } from "@/lib/curriculum";
+import { getCurriculum } from "@/server/queries/curriculum";
 import { fullName } from "@/lib/format";
 import {
   type ActionState,
@@ -39,7 +40,16 @@ export async function saveChildAction(_: ActionState, formData: FormData): Promi
   if (!parsed.success) return fieldErrors(parsed.error);
   const { levels, ...data } = parsed.data;
 
-  const expected = subjectsForClass(data.currentClass);
+  const existing = typeof childId === "string" && childId ? await db.child.findFirst({ where: { id: childId, parentId: parent.id } }) : null;
+  if (childId && !existing) return { ok: false, message: "Enfant introuvable." };
+  // Une classe désactivée n'est plus proposée, mais un enfant déjà inscrit dans cette classe peut la garder.
+  const curriculum = await getCurriculum();
+  const classe = curriculum.classes.find((c) => c.name === data.currentClass);
+  if (!classe || (!classe.active && existing?.currentClass !== classe.name)) {
+    return { ok: false, errors: { currentClass: ["Classe invalide."] } };
+  }
+
+  const expected = subjectsForClass(curriculum, data.currentClass);
   const missing = expected.filter((s) => !levels[s]);
   if (missing.length > 0) {
     return { ok: false, message: "Indiquez le niveau de l'enfant dans chaque matière." };
@@ -48,15 +58,13 @@ export async function saveChildAction(_: ActionState, formData: FormData): Promi
 
   let id: string;
   try {
-    if (typeof childId === "string" && childId) {
-      const existing = await db.child.findFirst({ where: { id: childId, parentId: parent.id } });
-      if (!existing) return { ok: false, message: "Enfant introuvable." };
+    if (existing) {
       await db.$transaction([
-        db.child.update({ where: { id: childId }, data: { ...data, npi: data.npi ?? null } }),
-        db.subjectLevel.deleteMany({ where: { childId } }),
-        db.subjectLevel.createMany({ data: levelRows.map((l) => ({ ...l, childId })) }),
+        db.child.update({ where: { id: existing.id }, data: { ...data, npi: data.npi ?? null } }),
+        db.subjectLevel.deleteMany({ where: { childId: existing.id } }),
+        db.subjectLevel.createMany({ data: levelRows.map((l) => ({ ...l, childId: existing.id })) }),
       ]);
-      id = childId;
+      id = existing.id;
     } else {
       const created = await db.child.create({
         data: { ...data, parentId: parent.id, subjectLevels: { create: levelRows } },

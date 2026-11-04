@@ -1,20 +1,57 @@
 @import "tailwindcss";
 
-/* Système de design Access : neutres froids, une couleur de marque (indigo profond), accents sémantiques. */
+/* Système de design Access : bleu et orange du logo (#004aad, #ff914d), neutres froids, accents sémantiques. */
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Titres des pages publiques (police chargée par src/app/(public)/layout.tsx). */
+  --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
-  --color-brand-50: #eef1ff;
-  --color-brand-100: #e0e5ff;
-  --color-brand-200: #c7cffe;
-  --color-brand-300: #a4affc;
-  --color-brand-400: #7d86f8;
-  --color-brand-500: #5f63f1;
-  --color-brand-600: #4b48e3;
-  --color-brand-700: #3f39c8;
-  --color-brand-800: #3431a2;
-  --color-brand-900: #2f2e80;
-  --color-brand-950: #1c1a4a;
+  --color-brand-50: #eef5ff;
+  --color-brand-100: #d9e8ff;
+  --color-brand-200: #b5d1fc;
+  --color-brand-300: #80b0f5;
+  --color-brand-400: #4a8aea;
+  --color-brand-500: #1a68d6;
+  --color-brand-600: #004aad;
+  --color-brand-700: #003d8f;
+  --color-brand-800: #003274;
+  --color-brand-900: #06295c;
+  --color-brand-950: #041a3d;
+
+  --color-accent-50: #fff5ee;
+  --color-accent-100: #ffe8d7;
+  --color-accent-200: #ffcfae;
+  --color-accent-300: #ffb07d;
+  --color-accent-400: #ff914d;
+  --color-accent-500: #ee6c22;
+  --color-accent-600: #d85a16;
+  --color-accent-700: #b24612;
+  --color-accent-800: #8d3913;
+  --color-accent-900: #723013;
+  --color-accent-950: #3e1607;
+
+  /* Tailles de police, toutes multipliées par --font-scale (réduit dans l'application installée, voir plus bas). */
+  --text-xs: calc(0.75rem * var(--font-scale));
+  --text-sm: calc(0.875rem * var(--font-scale));
+  --text-base: calc(1rem * var(--font-scale));
+  --text-lg: calc(1.125rem * var(--font-scale));
+  --text-xl: calc(1.25rem * var(--font-scale));
+  --text-2xl: calc(1.5rem * var(--font-scale));
+  --text-3xl: calc(1.875rem * var(--font-scale));
+  --text-4xl: calc(2.25rem * var(--font-scale));
+  --text-5xl: calc(3rem * var(--font-scale));
+  --text-9px: calc(9px * var(--font-scale));
+  --text-10px: calc(10px * var(--font-scale));
+  --text-11px: calc(11px * var(--font-scale));
+  --text-13px: calc(13px * var(--font-scale));
+  --text-15px: calc(15px * var(--font-scale));
+  --text-17px: calc(17px * var(--font-scale));
+  --text-22px: calc(22px * var(--font-scale));
+  --text-27px: calc(27px * var(--font-scale));
+  --text-28px: calc(28px * var(--font-scale));
+  --text-32px: calc(32px * var(--font-scale));
+  --text-38px: calc(38px * var(--font-scale));
+  --text-56px: calc(56px * var(--font-scale));
 
   --color-ink: #0f172a;
   --color-canvas: #f6f7fb;
@@ -37,6 +74,14 @@
 
 :root {
   color-scheme: light;
+  --font-scale: 1;
+}
+
+/* Application installée (PWA) : textes un peu plus petits, mêmes proportions. */
+@media (display-mode: standalone) {
+  :root {
+    --font-scale: 0.9;
+  }
 }
 
 html {
@@ -59,7 +104,7 @@ fieldset {
 
 /* Champs de formulaire */
 .field {
-  @apply block h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-[15px] text-ink shadow-[0_1px_1px_rgb(15_23_42/0.03)] outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-slate-50 aria-[invalid=true]:border-rose-400 aria-[invalid=true]:focus:ring-rose-100;
+  @apply block h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-15px text-ink shadow-[0_1px_1px_rgb(15_23_42/0.03)] outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-slate-50 aria-[invalid=true]:border-rose-400 aria-[invalid=true]:focus:ring-rose-100;
 }
 
 textarea.field {
@@ -73,6 +118,24 @@ select.field {
 
 input[type="file"].field {
   @apply h-auto py-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-700 hover:file:bg-brand-100;
+}
+
+/* Place laissée à une icône ou un préfixe à gauche, à un bouton à droite (voir TextField). */
+.field.has-icon {
+  @apply pl-10;
+}
+
+.field.has-prefix {
+  @apply pl-[4.25rem];
+}
+
+.field.has-action {
+  @apply pr-11;
+}
+
+/* Pages de connexion et d'inscription : champs plus hauts et plus arrondis. */
+.auth-fields .field {
+  @apply h-12 rounded-2xl;
 }
 
 .label {

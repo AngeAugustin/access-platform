@@ -2,16 +2,25 @@
 
 import { createContext, use, useEffect, useRef, useState, useTransition } from "react";
 import type { ComponentProps, ReactNode } from "react";
-import { CircleAlert, CircleCheck, LoaderCircle } from "lucide-react";
+import { CircleAlert, CircleCheck, Eye, EyeOff, LoaderCircle, type LucideIcon } from "lucide-react";
 import type { ActionState } from "@/lib/validation";
 import { Button, type ButtonSize, type ButtonVariant, cx } from "./index";
 import { showToast } from "./toaster";
+import { type Confirmation, ConfirmDialog } from "./confirm-dialog";
+
+export type { Confirmation };
 
 type FormContextValue = { state: ActionState; pending: boolean };
 const FormContext = createContext<FormContextValue>({ state: {}, pending: false });
 
 export function useFormState() {
   return use(FormContext);
+}
+
+// Superpose des erreurs locales (validation d'étape) sur celles renvoyées par le serveur.
+export function FormErrorScope({ errors, children }: { errors?: ActionState["errors"]; children: ReactNode }) {
+  const parent = useFormState();
+  return <FormContext value={{ ...parent, state: { ...parent.state, errors: { ...parent.state.errors, ...errors } } }}>{children}</FormContext>;
 }
 
 type ServerAction = (state: ActionState, formData: FormData) => Promise<ActionState>;
@@ -23,19 +32,22 @@ export function ActionForm({
   children,
   className,
   resetOnSuccess = false,
-  confirmMessage,
+  confirm,
   toast = false,
 }: {
   action: ServerAction;
   children: ReactNode;
   className?: string;
   resetOnSuccess?: boolean;
-  confirmMessage?: string;
+  // Fenêtre de confirmation avant l'envoi. Une fonction reçoit les données saisies (et le bouton
+  // utilisé) et renvoie null pour envoyer sans confirmation.
+  confirm?: Confirmation | ((formData: FormData) => Confirmation | null);
   // Affiche aussi le résultat en message éphémère : utile quand le formulaire disparaît après l'action.
   toast?: boolean;
 }) {
   const [state, setState] = useState<ActionState>({});
   const [pending, startTransition] = useTransition();
+  const [asking, setAsking] = useState<{ confirmation: Confirmation; formData: FormData } | null>(null);
   const stateRef = useRef(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
@@ -62,14 +74,24 @@ export function ActionForm({
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          if (pending) return;
-          if (confirmMessage && !window.confirm(confirmMessage)) return;
+          if (pending || asking) return;
           const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLElement | null;
-          submit(new FormData(e.currentTarget, submitter));
+          const formData = new FormData(e.currentTarget, submitter);
+          const confirmation = typeof confirm === "function" ? confirm(formData) : confirm;
+          if (confirmation) setAsking({ confirmation, formData });
+          else submit(formData);
         }}
       >
         {children}
       </form>
+      {/* Hors du <form> : les boutons de la fenêtre ne doivent pas le soumettre. */}
+      <ConfirmDialog
+        confirmation={asking?.confirmation ?? null}
+        onClose={(ok) => {
+          setAsking(null);
+          if (ok && asking) submit(asking.formData);
+        }}
+      />
     </FormContext>
   );
 }
@@ -123,7 +145,7 @@ export function FieldError({ name }: { name: string }) {
   const errors = state.errors?.[name];
   if (!errors?.length) return null;
   return (
-    <p id={`${name}-error`} className="mt-1.5 text-[13px] text-rose-600">
+    <p id={`${name}-error`} className="mt-1.5 text-13px text-rose-600">
       {errors[0]}
     </p>
   );
@@ -136,7 +158,19 @@ function useInvalid(name: string) {
 
 type FieldProps = { label: string; name: string; hint?: ReactNode };
 
-export function TextField({ label, name, hint, className, ...props }: FieldProps & ComponentProps<"input">) {
+// `icon` ou `prefix` (ex. « +229 ») s'affichent à gauche dans le champ, `action` (un bouton) à droite.
+type FieldDecorations = { icon?: LucideIcon; prefix?: string; action?: ReactNode };
+
+export function TextField({
+  label,
+  name,
+  hint,
+  className,
+  icon: Icon,
+  prefix,
+  action,
+  ...props
+}: FieldProps & FieldDecorations & ComponentProps<"input">) {
   const invalid = useInvalid(name);
   const id = props.id ?? name;
   return (
@@ -145,10 +179,52 @@ export function TextField({ label, name, hint, className, ...props }: FieldProps
         {label}
         {props.required && <span className="text-rose-500"> *</span>}
       </label>
-      <input id={id} name={name} className="field" aria-invalid={invalid} aria-describedby={invalid ? `${name}-error` : undefined} {...props} />
-      {hint && <p className="mt-1.5 text-[13px] text-slate-500">{hint}</p>}
+      <div className="relative">
+        {Icon && <Icon className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-slate-400" aria-hidden />}
+        {prefix && (
+          <span className="pointer-events-none absolute inset-y-2.5 left-3.5 flex items-center border-r border-slate-200 pr-2.5 text-sm font-semibold text-slate-600" aria-hidden>
+            {prefix}
+          </span>
+        )}
+        <input
+          id={id}
+          name={name}
+          className={cx("field", Icon && "has-icon", prefix && "has-prefix", action ? "has-action" : null)}
+          aria-invalid={invalid}
+          aria-describedby={invalid ? `${name}-error` : undefined}
+          {...props}
+        />
+        {action && <div className="absolute inset-y-0 right-1.5 flex items-center">{action}</div>}
+      </div>
+      {hint && <div className="mt-1.5 text-13px text-slate-500">{hint}</div>}
       <FieldError name={name} />
     </div>
+  );
+}
+
+// Mot de passe avec bouton pour afficher la saisie.
+export function PasswordField(props: FieldProps & { icon?: LucideIcon; action?: ReactNode } & Omit<ComponentProps<"input">, "type">) {
+  const [visible, setVisible] = useState(false);
+  const Toggle = visible ? EyeOff : Eye;
+  return (
+    <TextField
+      {...props}
+      type={visible ? "text" : "password"}
+      action={
+        <span className="flex items-center gap-1">
+          {props.action}
+          <button
+            type="button"
+            onClick={() => setVisible((v) => !v)}
+            className="flex size-9 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            aria-pressed={visible}
+          >
+            <Toggle className="size-[18px]" aria-hidden />
+          </button>
+        </span>
+      }
+    />
   );
 }
 
@@ -162,7 +238,7 @@ export function TextArea({ label, name, hint, className, ...props }: FieldProps 
         {props.required && <span className="text-rose-500"> *</span>}
       </label>
       <textarea id={id} name={name} rows={4} className="field" aria-invalid={invalid} {...props} />
-      {hint && <p className="mt-1.5 text-[13px] text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1.5 text-13px text-slate-500">{hint}</p>}
       <FieldError name={name} />
     </div>
   );
@@ -193,7 +269,7 @@ export function SelectField({
           </option>
         ))}
       </select>
-      {hint && <p className="mt-1.5 text-[13px] text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1.5 text-13px text-slate-500">{hint}</p>}
       <FieldError name={name} />
     </div>
   );

@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import type { TimeSlot, Weekday } from "@/generated/prisma/client";
-import { addWeeks, planInstallments, planStop } from "@/lib/billing";
+import { addWeeks, planInstallments, planStop, reducePayout } from "@/lib/billing";
 import { TIME_SLOTS, WEEKDAYS } from "@/lib/constants";
 import { formatFcfa, fullName } from "@/lib/format";
 import { installmentReference, tutoringReference } from "@/lib/ids";
@@ -121,13 +121,15 @@ export async function createTutoring(
 export async function stopTutoring(tutoringId: string, actor: { id: string; role: "PARENT" | "ADMIN" }, reason: string) {
   const tutoring = await db.tutoring.findFirst({
     where: { id: tutoringId, ...(actor.role === "PARENT" ? { parentId: actor.id } : {}) },
-    include: { installments: true, child: true, educator: { select: { userId: true } } },
+    include: { installments: { include: { payout: true } }, child: true, educator: { select: { userId: true } } },
   });
   if (!tutoring) throw new BusinessError("Tutorat introuvable.");
   if (tutoring.status !== "ACTIVE") throw new BusinessError("Ce tutorat est déjà terminé.");
 
   const stopDate = new Date();
   const changes = planStop(tutoring, tutoring.installments, tutoring.startDate, stopDate);
+  // Montant retiré des reversements pas encore envoyés à l'éducateur.
+  let payoutReduction = 0;
 
   await db.$transaction(async (tx) => {
     for (const c of changes) {
@@ -139,6 +141,17 @@ export async function stopTutoring(tutoringId: string, actor: { id: string; role
           where: { id: c.id },
           data: { weeks: c.weeks, amount: c.amount, dueDate: addWeeks(c.dueDate, 1), remindedAt: null },
         });
+      } else {
+        await tx.installment.update({ where: { id: c.id }, data: { refundAmount: c.overpaidAmount } });
+        // Reversement pas encore parti : ramené aux semaines effectuées. Déjà lancé ou envoyé :
+        // l'écart reste visible dans les anomalies de paiement.
+        const payout = tutoring.installments.find((i) => i.id === c.id)?.payout;
+        if (payout && (payout.status === "PENDING" || (payout.status === "FAILED" && !payout.providerReference))) {
+          const reduced = reducePayout(payout, c.overpaidAmount);
+          if (reduced) await tx.payout.update({ where: { id: payout.id }, data: reduced });
+          else await tx.payout.delete({ where: { id: payout.id } });
+          payoutReduction += payout.netAmount - (reduced?.netAmount ?? 0);
+        }
       }
     }
     await tx.bookedSlot.deleteMany({ where: { tutoringId } });
@@ -148,23 +161,38 @@ export async function stopTutoring(tutoringId: string, actor: { id: string; role
     });
   });
 
-  await audit(actor.id, "tutoring.stop", "Tutoring", tutoringId, { reason, changes });
+  await audit(actor.id, "tutoring.stop", "Tutoring", tutoringId, { reason, changes, payoutReduction });
+  const child = fullName(tutoring.child);
+  const refundTotal = changes.reduce((sum, c) => sum + (c.kind === "refund-review" ? c.overpaidAmount : 0), 0);
   await notify({
     userId: tutoring.educator.userId,
     type: "tutoring.stopped",
     title: "Tutorat arrêté",
-    body: `Le tutorat de ${fullName(tutoring.child)} a été arrêté. Motif : ${reason}`,
+    body:
+      `Le tutorat de ${child} a été arrêté. Motif : ${reason}` +
+      (payoutReduction > 0 ? ` Votre reversement est ramené aux semaines effectuées (${formatFcfa(payoutReduction)} en moins).` : ""),
     link: `/educateur/eleves/${tutoring.id}`,
     email: true,
   });
-  const refunds = changes.filter((c) => c.kind === "refund-review");
-  if (refunds.length > 0) {
-    const total = refunds.reduce((sum, c) => sum + (c.kind === "refund-review" ? c.overpaidAmount : 0), 0);
+  // Le parent est prévenu quand l'arrêt vient de l'administration, ou quand un remboursement lui est dû.
+  if (actor.role === "ADMIN" || refundTotal > 0) {
+    await notify({
+      userId: tutoring.parentId,
+      type: "tutoring.stopped",
+      title: "Tutorat arrêté",
+      body:
+        (actor.role === "ADMIN" ? `Access a arrêté le tutorat de ${child}. Motif : ${reason}` : `Le tutorat de ${child} est arrêté.`) +
+        (refundTotal > 0 ? ` ${formatFcfa(refundTotal)} déjà payés correspondent à des semaines non effectuées : Access vous les rembourse.` : ""),
+      link: `/parent/tutorats/${tutoring.id}`,
+      email: true,
+    });
+  }
+  if (refundTotal > 0) {
     await notifyAdmins({
       type: "refund.review",
-      title: "Remboursement à étudier",
-      body: `Le tutorat ${tutoring.reference} a été arrêté après paiement : ${formatFcfa(total)} correspondent à des semaines non effectuées.`,
-      link: `/admin/tutorats/${tutoring.id}`,
+      title: "Remboursement à faire",
+      body: `Le tutorat ${tutoring.reference} a été arrêté après paiement : ${formatFcfa(refundTotal)} sont à rembourser au parent.`,
+      link: `/admin/paiements?onglet=anomalies`,
     });
   }
   return changes;

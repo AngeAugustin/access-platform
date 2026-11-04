@@ -1,68 +1,6 @@
 // Référentiels partagés entre le serveur et le navigateur (aucune donnée sensible ici).
 
-export const CLASS_LEVELS = [
-  "6ème",
-  "5ème",
-  "4ème ML",
-  "4ème MC",
-  "3ème ML",
-  "3ème MC",
-  "2nde AB",
-  "2nde CD",
-  "2nde G2",
-  "1ère AB",
-  "1ère C",
-  "1ère D",
-  "1ère G2",
-  "Tle AB",
-  "Tle C",
-  "Tle D",
-  "Tle G2",
-] as const;
-
-export const SUBJECTS = {
-  francais: "Français",
-  anglais: "Anglais",
-  allemand: "Allemand",
-  espagnol: "Espagnol",
-  philosophie: "Philosophie",
-  mathematiques: "Mathématiques",
-  svt: "SVT",
-  pct: "PCT",
-  histgeo: "Histoire-Géographie",
-  economie: "Économie",
-  comptabilite: "Comptabilité",
-  comptagenerale: "Comptabilité générale",
-  comptaanalytique: "Comptabilité analytique",
-  comptasociete: "Comptabilité des sociétés",
-  comptausuelle: "Comptabilité usuelle",
-  ta: "Techniques administratives",
-  mathsfinancieres: "Mathématiques financières",
-  mathsgenerales: "Mathématiques générales",
-  droit: "Droit",
-  fiscalite: "Fiscalité",
-} as const;
-
-export type SubjectKey = keyof typeof SUBJECTS;
-export const SUBJECT_KEYS = Object.keys(SUBJECTS) as SubjectKey[];
-
-const COLLEGE: SubjectKey[] = ["francais", "mathematiques", "anglais", "svt", "pct", "histgeo", "allemand", "espagnol"];
-const SERIE_AB: SubjectKey[] = ["francais", "anglais", "svt", "philosophie", "mathematiques", "allemand", "espagnol", "histgeo"];
-const SERIE_CD: SubjectKey[] = ["francais", "anglais", "pct", "svt", "histgeo", "philosophie", "mathematiques"];
-
-// Matières évaluées selon la classe (reprise des règles de l'application d'origine).
-export function subjectsForClass(classLevel: string): SubjectKey[] {
-  if (["6ème", "5ème", "4ème ML", "4ème MC", "3ème ML", "3ème MC"].includes(classLevel)) return COLLEGE;
-  if (["2nde AB", "1ère AB", "Tle AB"].includes(classLevel)) return SERIE_AB;
-  if (["2nde CD", "1ère C", "1ère D", "Tle C", "Tle D"].includes(classLevel)) return SERIE_CD;
-  if (classLevel === "2nde G2")
-    return ["francais", "anglais", "economie", "comptabilite", "ta", "mathsfinancieres", "droit", "mathsgenerales"];
-  if (classLevel === "1ère G2")
-    return ["anglais", "francais", "ta", "comptagenerale", "comptausuelle", "mathsgenerales", "mathsfinancieres", "economie", "droit"];
-  if (classLevel === "Tle G2")
-    return ["francais", "anglais", "droit", "economie", "comptasociete", "comptaanalytique", "fiscalite", "mathsfinancieres", "mathsgenerales", "philosophie"];
-  return [];
-}
+// Les classes et les matières sont en base (voir src/lib/curriculum.ts).
 
 export const SUBJECT_LEVELS = {
   WEAK: "Faible",
@@ -71,7 +9,22 @@ export const SUBJECT_LEVELS = {
   VERY_GOOD: "Très bon",
 } as const;
 
-export const EDUCATOR_LEVELS = ["Cycle I", "Cycle II", "Cycle III"] as const;
+// Cycles scolaires : chaque classe du référentiel en relève d'un, l'éducateur choisit les siens.
+export const CYCLES = ["Primaire", "Secondaire 1", "Secondaire 2"] as const;
+
+export const MARITAL_STATUSES = ["Célibataire", "Marié(e)", "Divorcé(e)", "Veuf / Veuve"] as const;
+
+export const DEGREE_LEVELS = ["BAC", "BTS / DUT / DTS", "Licence", "Master", "Doctorat", "CAPES / CAPET / CAPEPS", "Autre diplôme"] as const;
+
+export const OCCUPATIONS = [
+  "Étudiant(e)",
+  "Enseignant(e) en activité",
+  "Enseignant(e) à la retraite",
+  "Répétiteur / Répétitrice à plein temps",
+  "Autre profession",
+] as const;
+
+export const MAX_EXPERIENCES = 8;
 
 export const WEEKDAYS = {
   MONDAY: "Lundi",
@@ -132,6 +85,12 @@ export const INSTALLMENT_STATUS = {
   CANCELLED: "Annulée",
 } as const;
 
+// Opérateurs Mobile Money vers lesquels FedaPay sait reverser au Bénin.
+export const MOBILE_OPERATORS = {
+  MTN: "MTN Mobile Money",
+  MOOV: "Moov Money",
+} as const;
+
 export const PAYOUT_STATUS = {
   PENDING: "À reverser",
   PROCESSING: "En cours",
@@ -159,6 +118,12 @@ export const ROLE_LABELS = {
   PARENT: "Parent",
   EDUCATOR: "Éducateur",
   ADMIN: "Administrateur",
+} as const;
+
+export const ACCOUNT_STATUS = {
+  ACTIVE: "Actif",
+  SUSPENDED: "Suspendu",
+  DEACTIVATED: "Désactivé",
 } as const;
 
 export const ROLE_HOME = {

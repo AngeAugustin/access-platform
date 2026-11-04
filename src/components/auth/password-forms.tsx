@@ -1,68 +1,88 @@
 "use client";
 
-import Link from "next/link";
-import { changePasswordAction, forgotPasswordAction, resetPasswordAction } from "@/server/actions/auth";
-import { ActionForm, FormMessage, SubmitButton, TextField, useFormState } from "@/components/ui/form";
+import { KeyRound, Lock, Mail } from "lucide-react";
+import { changePasswordAction, forgotPasswordAction, resetPasswordAction, verifyResetCodeAction } from "@/server/actions/auth";
+import { ActionForm, FormMessage, PasswordField, SubmitButton, TextField } from "@/components/ui/form";
 import { PowGuard } from "@/components/security/pow-guard";
+import { NewPasswordFields } from "@/components/auth/new-password-fields";
 
 export function ForgotPasswordForm() {
   return (
     <ActionForm action={forgotPasswordAction} className="space-y-5">
       <FormMessage />
       <PowGuard purpose="forgot" />
-      <TextField label="Adresse e-mail du compte" name="email" type="email" autoComplete="email" required />
-      <SubmitButton className="w-full" size="lg">
+      <TextField label="Adresse e-mail du compte" name="email" type="email" autoComplete="email" placeholder="vous@exemple.com" icon={Mail} required />
+      <SubmitButton className="w-full rounded-2xl!" size="lg">
         Recevoir un code
       </SubmitButton>
-      <NextStep />
     </ActionForm>
   );
 }
 
-function NextStep() {
-  const { state } = useFormState();
-  if (!state.ok) return null;
+// Étape 2. L'adresse est connue quand on arrive de « Mot de passe oublié » ; sinon (lien « J'ai déjà un code »), on la demande.
+export function ResetCodeForm({ knownEmail }: { knownEmail: boolean }) {
   return (
-    <Link href="/reinitialiser" className="block text-center text-sm font-semibold text-brand-700 hover:text-brand-800">
-      Saisir le code →
-    </Link>
+    <ActionForm action={verifyResetCodeAction} className="space-y-5">
+      <FormMessage />
+      {!knownEmail && <TextField label="Adresse e-mail du compte" name="email" type="email" autoComplete="email" placeholder="vous@exemple.com" icon={Mail} required />}
+      <TextField
+        label="Code reçu"
+        name="code"
+        inputMode="numeric"
+        pattern="[0-9]{6}"
+        maxLength={6}
+        autoComplete="one-time-code"
+        icon={KeyRound}
+        placeholder="6 chiffres"
+        autoFocus={knownEmail}
+        required
+      />
+      <SubmitButton className="w-full rounded-2xl!" size="lg">
+        Vérifier le code
+      </SubmitButton>
+    </ActionForm>
   );
 }
 
-export function ResetPasswordForm({ email }: { email?: string }) {
+// Étape 3 : le code a été vérifié à l'écran précédent.
+export function ResetPasswordForm() {
   return (
     <ActionForm action={resetPasswordAction} className="space-y-5">
       <FormMessage />
-      <TextField label="Adresse e-mail" name="email" type="email" defaultValue={email} autoComplete="email" required />
-      <TextField label="Code reçu" name="code" inputMode="numeric" maxLength={6} autoComplete="one-time-code" required />
-      <TextField label="Nouveau mot de passe" name="password" type="password" autoComplete="new-password" required hint="10 caractères minimum, avec au moins une lettre et un chiffre." />
-      <TextField label="Confirmer" name="confirmPassword" type="password" autoComplete="new-password" required />
-      <SubmitButton className="w-full" size="lg">
+      <NewPasswordFields label="Nouveau mot de passe" confirmLabel="Confirmer le mot de passe" icon={Lock} />
+      <SubmitButton className="w-full rounded-2xl!" size="lg">
         Changer le mot de passe
       </SubmitButton>
-      <LoginLink />
     </ActionForm>
-  );
-}
-
-function LoginLink() {
-  const { state } = useFormState();
-  if (!state.ok) return null;
-  return (
-    <Link href="/connexion" className="block text-center text-sm font-semibold text-brand-700 hover:text-brand-800">
-      Se connecter →
-    </Link>
   );
 }
 
 export function ChangePasswordForm() {
   return (
-    <ActionForm action={changePasswordAction} className="space-y-5" resetOnSuccess>
+    <ActionForm
+      action={changePasswordAction}
+      className="space-y-5"
+      resetOnSuccess
+      confirm={{ title: "Modifier le mot de passe ?", description: "Utilisez le nouveau mot de passe dès votre prochaine connexion.", confirmLabel: "Modifier" }}
+    >
       <FormMessage />
-      <TextField label="Mot de passe actuel" name="currentPassword" type="password" autoComplete="current-password" required />
-      <TextField label="Nouveau mot de passe" name="password" type="password" autoComplete="new-password" required hint="10 caractères minimum, avec au moins une lettre et un chiffre." />
-      <TextField label="Confirmer" name="confirmPassword" type="password" autoComplete="new-password" required />
+      <PasswordField label="Mot de passe actuel" name="currentPassword" autoComplete="current-password" required />
+      <NewPasswordFields label="Nouveau mot de passe" confirmLabel="Confirmer" />
       <SubmitButton>Modifier le mot de passe</SubmitButton>
+    </ActionForm>
+  );
+}
+
+// Remplacement obligatoire du mot de passe provisoire fixé par un administrateur.
+export function ProvisionalPasswordForm() {
+  return (
+    <ActionForm action={changePasswordAction} className="space-y-5">
+      <FormMessage />
+      <PasswordField label="Mot de passe provisoire" name="currentPassword" autoComplete="current-password" icon={Lock} required />
+      <NewPasswordFields label="Nouveau mot de passe" confirmLabel="Confirmer" icon={Lock} />
+      <SubmitButton className="w-full rounded-2xl!" size="lg">
+        Enregistrer et continuer
+      </SubmitButton>
     </ActionForm>
   );
 }

@@ -28,7 +28,7 @@ export async function ComplaintsPage({ user }: { user: CurrentUser }) {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold text-ink">{c.subject}</p>
-                    <p className="text-[13px] text-slate-500">Déposée le {formatDate(c.createdAt)}</p>
+                    <p className="text-13px text-slate-500">Déposée le {formatDate(c.createdAt)}</p>
                   </div>
                   <Badge tone={tone[c.status]}>{COMPLAINT_STATUS[c.status]}</Badge>
                 </div>

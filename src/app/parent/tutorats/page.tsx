@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { BookOpenCheck, CalendarClock, ChevronRight } from "lucide-react";
+import { BookOpenCheck, ChevronRight } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { formatDate, fullName } from "@/lib/format";
-import { tutoringProgress } from "@/lib/progress";
+import { currentWeek, tutoringProgress } from "@/lib/progress";
 import { widthClass } from "@/lib/ui-scale";
-import { Badge, EmptyState, LinkButton, PageHeader, cx } from "@/components/ui";
+import { EmptyState, LinkButton, cx } from "@/components/ui";
 import { Avatar } from "@/components/avatar";
 import { TutoringBadge } from "@/components/status";
+import { Bar, ScreenTitle, panel } from "@/components/parent/kit";
 
 export const metadata = { title: "Suivis" };
 
@@ -22,48 +23,43 @@ export default async function TutoringsPage() {
     },
     orderBy: [{ status: "asc" }, { startDate: "desc" }],
   });
+  const now = new Date();
   return (
     <>
-      <PageHeader title="Suivis" subtitle="Les tutorats de vos enfants, en cours et passés." />
+      <ScreenTitle eyebrow="Les tutorats de vos enfants" title="Suivis" />
       {tutorings.length === 0 ? (
         <EmptyState icon={BookOpenCheck} title="Aucun tutorat pour l'instant" action={<LinkButton href="/parent/educateurs">Trouver un éducateur</LinkButton>} />
       ) : (
-        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {tutorings.map((t) => {
-            const progress = tutoringProgress(t.startDate, t.stoppedAt ?? t.endDate);
+            const progress = tutoringProgress(t.startDate, t.stoppedAt ?? t.endDate, now);
             return (
               <li key={t.id}>
-                <Link
-                  href={`/parent/tutorats/${t.id}`}
-                  className="group block rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft transition hover:border-brand-200 hover:shadow-lift"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <Avatar name={fullName(t.educator.user)} documentId={t.educator.documents[0]?.id} size={44} />
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-ink">{fullName(t.child)}</p>
-                        <p className="truncate text-sm text-slate-500">avec {fullName(t.educator.user)}</p>
-                      </div>
+                <Link href={`/parent/tutorats/${t.id}`} className={cx(panel, "group block p-4 transition hover:shadow-lift")}>
+                  <div className="flex items-center gap-3">
+                    <Avatar name={fullName(t.educator.user)} documentId={t.educator.documents[0]?.id} size={48} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-15px font-semibold text-ink">
+                        {t.child.firstName} · {fullName(t.educator.user)}
+                      </p>
+                      <p className="mt-0.5 truncate text-13px text-slate-500">{t.slotsLabel}</p>
                     </div>
-                    <TutoringBadge status={t.status} />
+                    <ChevronRight className="size-5 text-slate-300 transition group-hover:text-brand-500" aria-hidden />
                   </div>
-                  <p className="mt-4 flex items-center gap-1.5 text-[13px] text-slate-500">
-                    <CalendarClock className="size-3.5" aria-hidden /> {t.slotsLabel}
-                  </p>
                   <div className="mt-4">
                     <div className="mb-1.5 flex justify-between text-xs text-slate-500">
-                      <span>
-                        {formatDate(t.startDate)} → {formatDate(t.endDate)}
-                      </span>
+                      <span>{t.status === "ACTIVE" ? `Semaine ${currentWeek(t.startDate, t.durationWeeks, now)} sur ${t.durationWeeks}` : `${formatDate(t.startDate)} → ${formatDate(t.endDate)}`}</span>
                       <span>{progress} %</span>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                      <div className={cx("h-full rounded-full bg-brand-500", widthClass(progress))} />
-                    </div>
+                    <Bar widthClass={widthClass(progress)} />
                   </div>
-                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                    {t._count.lessons > 0 ? <Badge tone="amber">{t._count.lessons} séance(s) à confirmer</Badge> : <span className="text-xs text-slate-400">Réf. {t.reference}</span>}
-                    <ChevronRight className="size-4 text-slate-300 transition group-hover:text-brand-500" aria-hidden />
+                  <div className="mt-3.5 flex flex-wrap items-center gap-2">
+                    <TutoringBadge status={t.status} />
+                    {t._count.lessons > 0 && (
+                      <span className="rounded-full bg-accent-50 px-2.5 py-0.5 text-xs font-semibold text-accent-700">
+                        {t._count.lessons} séance{t._count.lessons > 1 ? "s" : ""} à confirmer
+                      </span>
+                    )}
                   </div>
                 </Link>
               </li>

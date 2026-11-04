@@ -13,6 +13,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Le serveur de développement refuse sinon les scripts demandés depuis un téléphone du réseau local,
+  // et les formulaires se contentent de recharger la page.
+  allowedDevOrigins: ["192.168.*.*"],
   // Pièces justificatives : 5 Mo maximum par fichier, plus la marge du multipart.
   experimental: {
     serverActions: { bodySizeLimit: "6mb" },

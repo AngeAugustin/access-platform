@@ -5,15 +5,22 @@ import { requireRole } from "@/lib/auth/dal";
 import { COMPLAINT_STATUS, ROLE_LABELS } from "@/lib/constants";
 import { formatDate, fullName } from "@/lib/format";
 import { Badge, EmptyState, PageHeader, Table, Td } from "@/components/ui";
+import { Pagination } from "@/components/ui/pagination";
+import { paginate } from "@/lib/pagination";
 
 export const metadata = { title: "Réclamations" };
 const tone = { OPEN: "amber", IN_PROGRESS: "blue", RESOLVED: "green", REJECTED: "red" } as const;
 
-export default async function AdminComplaintsPage() {
+export default async function AdminComplaintsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   await requireRole("ADMIN");
-  const complaints = await db.complaint.findMany({ include: { author: true }, orderBy: { createdAt: "desc" }, take: 300 });
-  const order = { OPEN: 0, IN_PROGRESS: 1, RESOLVED: 2, REJECTED: 3 };
-  complaints.sort((a, b) => order[a.status] - order[b.status]);
+  const info = paginate(await db.complaint.count(), (await searchParams).page);
+  // Statuts triés dans leur ordre de déclaration : ouvertes, en cours, résolues, rejetées.
+  const complaints = await db.complaint.findMany({
+    include: { author: true },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    skip: info.skip,
+    take: info.take,
+  });
   return (
     <>
       <PageHeader title="Réclamations" subtitle="Les réclamations ouvertes sont en tête de liste." />
@@ -39,6 +46,7 @@ export default async function AdminComplaintsPage() {
           ))}
         </Table>
       )}
+      <Pagination info={info} path="/admin/reclamations" label="réclamation" />
     </>
   );
 }

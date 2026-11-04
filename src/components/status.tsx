@@ -1,4 +1,6 @@
+import { isLocked } from "@/lib/auth/lockout";
 import {
+  ACCOUNT_STATUS,
   INSTALLMENT_STATUS,
   LESSON_STATUS,
   PAYOUT_STATUS,
@@ -6,6 +8,19 @@ import {
   TUTORING_STATUS,
 } from "@/lib/constants";
 import { Badge } from "@/components/ui";
+
+// État de connexion d'un compte : le verrou après échecs de connexion prime sur le statut.
+export function AccountBadge({ status, lockedUntil }: { status: keyof typeof ACCOUNT_STATUS; lockedUntil?: Date | null }) {
+  if (status === "ACTIVE" && isLocked(lockedUntil)) return <Badge tone="amber">Verrouillé</Badge>;
+  const tone = { ACTIVE: "green", SUSPENDED: "red", DEACTIVATED: "gray" } as const;
+  return <Badge tone={tone[status]}>{ACCOUNT_STATUS[status]}</Badge>;
+}
+
+export function accountSummary(status: keyof typeof ACCOUNT_STATUS, lockedUntil?: Date | null): string {
+  if (status === "SUSPENDED") return "Suspendu · ne peut plus se connecter";
+  if (status === "DEACTIVATED") return "Désactivé · compte fermé";
+  return isLocked(lockedUntil) ? "Verrouillé · trop d'échecs de connexion" : "Actif · peut se connecter";
+}
 
 export function TutoringBadge({ status }: { status: keyof typeof TUTORING_STATUS }) {
   const tone = { ACTIVE: "green", COMPLETED: "gray", STOPPED: "red" } as const;

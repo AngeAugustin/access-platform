@@ -47,7 +47,7 @@ export async function NotificationsPage({ user }: { user: CurrentUser }) {
                       <span className={cx("mt-1.5 size-2 shrink-0 rounded-full", n.readAt ? "bg-transparent" : "bg-brand-500")} aria-hidden />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-3">
-                          <p className={cx("text-[15px]", n.readAt ? "font-medium text-slate-700" : "font-semibold text-ink")}>{n.title}</p>
+                          <p className={cx("text-15px", n.readAt ? "font-medium text-slate-700" : "font-semibold text-ink")}>{n.title}</p>
                           <time className="shrink-0 text-xs text-slate-400">{formatDateTime(n.createdAt)}</time>
                         </div>
                         <p className="mt-0.5 text-sm leading-relaxed text-slate-500">{n.body}</p>

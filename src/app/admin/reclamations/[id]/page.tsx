@@ -27,7 +27,7 @@ export default async function AdminComplaintPage({ params }: { params: Promise<{
               ["Traitée par", c.handledBy ? `${fullName(c.handledBy)} le ${formatDateTime(c.handledAt)}` : "—"],
             ]}
           />
-          <p className="mt-5 rounded-xl bg-slate-50 p-4 text-[15px] leading-relaxed whitespace-pre-line text-slate-700">{c.details}</p>
+          <p className="mt-5 rounded-xl bg-slate-50 p-4 text-15px leading-relaxed whitespace-pre-line text-slate-700">{c.details}</p>
         </Card>
         <Card title="Réponse">
           <ComplaintHandlingForm complaintId={c.id} defaults={{ status: c.status, response: c.response ?? "" }} />

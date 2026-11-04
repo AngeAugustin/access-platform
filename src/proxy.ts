@@ -26,7 +26,9 @@ export function proxy(request: NextRequest) {
     isDev ? "style-src 'self' 'unsafe-inline'" : `style-src 'self' 'nonce-${nonce}'`,
     "img-src 'self' blob: data:",
     "font-src 'self'",
-    "connect-src 'self'",
+    // En développement, la mise à jour à chaud passe par un WebSocket : Safari et les navigateurs iOS
+    // ne l'admettent pas sous 'self' et garderaient sinon d'anciens styles.
+    `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
     "worker-src 'self'",
     "manifest-src 'self'",
     "object-src 'none'",

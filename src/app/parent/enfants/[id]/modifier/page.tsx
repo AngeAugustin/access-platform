@@ -3,19 +3,24 @@ import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { Card, PageHeader } from "@/components/ui";
 import { ChildForm } from "@/components/parent/child-form";
+import { getCurriculum } from "@/server/queries/curriculum";
 
 export const metadata = { title: "Modifier l'enfant" };
 
 export default async function EditChildPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireRole("PARENT");
   const { id } = await params;
-  const child = await db.child.findFirst({ where: { id, parentId: user.id }, include: { subjectLevels: true } });
+  const [child, curriculum] = await Promise.all([
+    db.child.findFirst({ where: { id, parentId: user.id }, include: { subjectLevels: true } }),
+    getCurriculum(),
+  ]);
   if (!child) notFound();
   return (
     <>
       <PageHeader title="Modifier la fiche" back={`/parent/enfants/${id}`} />
       <Card>
         <ChildForm
+          curriculum={curriculum}
           defaults={{
             id: child.id,
             npi: child.npi ?? undefined,

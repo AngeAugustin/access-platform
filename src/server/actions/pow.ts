@@ -3,7 +3,7 @@
 import { newChallenge } from "@/lib/pow";
 import type { PowPurpose } from "@/lib/pow-core";
 
-const PURPOSES: PowPurpose[] = ["login", "register", "forgot"];
+const PURPOSES: PowPurpose[] = ["login", "register", "forgot", "contact"];
 
 // Délivre un défi anti-robot. La difficulté est fixée par le serveur, jamais par le client.
 export async function getPowChallenge(purpose: PowPurpose) {

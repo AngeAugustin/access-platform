@@ -43,7 +43,7 @@ export default async function StudentsPage() {
                   </div>
                   <TutoringBadge status={t.status} />
                 </div>
-                <p className="mt-4 flex items-center gap-1.5 text-[13px] text-slate-500">
+                <p className="mt-4 flex items-center gap-1.5 text-13px text-slate-500">
                   <CalendarDays className="size-3.5" aria-hidden /> {t.slotsLabel}
                 </p>
                 <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">

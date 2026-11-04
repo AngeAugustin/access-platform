@@ -11,8 +11,10 @@ export function cx(...classes: (string | false | null | undefined)[]) {
 // ---------------------------------------------------------------------------
 
 const buttonVariants = {
-  primary: "bg-brand-600 text-white shadow-[0_1px_2px_rgb(75_72_227/0.3),inset_0_1px_0_rgb(255_255_255/0.12)] hover:bg-brand-700 disabled:bg-brand-600/50",
+  primary: "bg-brand-600 text-white shadow-[0_1px_2px_rgb(0_74_173/0.32),inset_0_1px_0_rgb(255_255_255/0.12)] hover:bg-brand-700 disabled:bg-brand-600/50",
+  accent: "bg-accent-500 text-white shadow-[0_1px_2px_rgb(238_108_34/0.32),inset_0_1px_0_rgb(255_255_255/0.14)] hover:bg-accent-600 disabled:bg-accent-500/50",
   secondary: "border border-slate-200 bg-white text-slate-800 shadow-[0_1px_1px_rgb(15_23_42/0.04)] hover:border-slate-300 hover:bg-slate-50",
+  dark: "bg-brand-600 text-white hover:bg-brand-700 disabled:bg-brand-600/50",
   soft: "bg-brand-50 text-brand-700 hover:bg-brand-100",
   danger: "bg-rose-600 text-white shadow-sm hover:bg-rose-700",
   "danger-soft": "bg-rose-50 text-rose-700 hover:bg-rose-100",
@@ -20,9 +22,9 @@ const buttonVariants = {
 } as const;
 
 const buttonSizes = {
-  sm: "h-8 gap-1.5 rounded-lg px-3 text-[13px]",
+  sm: "h-8 gap-1.5 rounded-lg px-3 text-13px",
   md: "h-10 gap-2 rounded-xl px-4 text-sm",
-  lg: "h-12 gap-2 rounded-xl px-5 text-[15px]",
+  lg: "h-12 gap-2 rounded-xl px-5 text-15px",
 } as const;
 
 export type ButtonVariant = keyof typeof buttonVariants;
@@ -67,11 +69,12 @@ export function Card({
   padded?: boolean;
 }) {
   return (
-    <section className={cx("rounded-2xl border border-slate-200/80 bg-white shadow-soft", className)}>
+    // min-w-0 : dans une grille, une carte ne s'élargit pas pour contenir une ligne trop longue.
+    <section className={cx("min-w-0 rounded-2xl border border-slate-200/80 bg-white shadow-soft", className)}>
       {(title || action) && (
         <header className={cx("flex items-start justify-between gap-4", padded ? "px-5 pt-5 sm:px-6 sm:pt-6" : "border-b border-slate-100 px-5 py-4 sm:px-6")}>
           <div className="min-w-0">
-            {title && <h2 className="text-[15px] font-semibold tracking-tight text-ink">{title}</h2>}
+            {title && <h2 className="text-15px font-semibold tracking-tight text-ink">{title}</h2>}
             {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
           </div>
           {action && <div className="shrink-0">{action}</div>}
@@ -96,7 +99,7 @@ export function PageHeader({
   eyebrow?: ReactNode;
 }) {
   return (
-    <div className="mb-6 sm:mb-8">
+    <div className="mb-4 sm:mb-5">
       {back && (
         <Link href={back} className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-brand-700">
           <ChevronLeft className="size-4" aria-hidden />
@@ -105,9 +108,9 @@ export function PageHeader({
       )}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          {eyebrow && <p className="mb-1 text-[13px] font-medium text-brand-600">{eyebrow}</p>}
-          <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">{title}</h1>
-          {subtitle && <div className="mt-1.5 text-[15px] text-slate-500">{subtitle}</div>}
+          {eyebrow && <p className="mb-1 text-13px font-medium text-brand-600">{eyebrow}</p>}
+          <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-28px">{title}</h1>
+          {subtitle && <div className="mt-1.5 text-15px text-slate-500">{subtitle}</div>}
         </div>
         {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
       </div>
@@ -115,10 +118,38 @@ export function PageHeader({
   );
 }
 
+// Onglets sous forme de liens : l'onglet ouvert est porté par l'URL (survit aux rechargements et se partage).
+export function Tabs({ items, current, label }: { items: { key: string; href: string; label: ReactNode; count?: number }[]; current: string; label: string }) {
+  return (
+    <nav aria-label={label} className="mb-5 flex flex-wrap gap-1 border-b border-slate-200">
+      {items.map((t) => {
+        const active = t.key === current;
+        return (
+          <Link
+            key={t.key}
+            href={t.href}
+            scroll={false}
+            aria-current={active ? "page" : undefined}
+            className={cx(
+              "-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition",
+              active ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500 hover:border-slate-300 hover:text-ink",
+            )}
+          >
+            {t.label}
+            {t.count !== undefined && (
+              <span className={cx("rounded-full px-2 py-0.5 text-xs tabular-nums", active ? "bg-brand-50 text-brand-700" : "bg-slate-100 text-slate-600")}>{t.count}</span>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-3 flex items-center justify-between gap-3">
-      <h2 className="text-[13px] font-semibold tracking-wide text-slate-500 uppercase">{children}</h2>
+      <h2 className="text-13px font-semibold tracking-wide text-slate-500 uppercase">{children}</h2>
       {action}
     </div>
   );
@@ -155,6 +186,7 @@ export function Tag({ children }: { children: ReactNode }) {
 
 const tileTones = {
   brand: "bg-brand-50 text-brand-600",
+  accent: "bg-accent-50 text-accent-600",
   green: "bg-emerald-50 text-emerald-600",
   amber: "bg-amber-50 text-amber-600",
   rose: "bg-rose-50 text-rose-600",
@@ -191,7 +223,7 @@ export function Stat({
         <p className="text-sm font-medium text-slate-500">{label}</p>
         {icon && <IconTile icon={icon} tone={tone} size="sm" />}
       </div>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-ink tabular-nums sm:text-[28px]">{value}</p>
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-ink tabular-nums sm:text-28px">{value}</p>
       {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
     </>
   );
@@ -265,8 +297,8 @@ export function ListRow({
     <>
       {leading}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-medium text-ink">{title}</p>
-        {meta && <div className="mt-0.5 text-[13px] text-slate-500">{meta}</div>}
+        <p className="truncate text-15px font-medium text-ink">{title}</p>
+        {meta && <div className="mt-0.5 text-13px text-slate-500">{meta}</div>}
       </div>
       {trailing && <div className="flex shrink-0 flex-col items-end gap-1 text-right">{trailing}</div>}
       {href && <ChevronRight className="size-4 shrink-0 text-slate-300 transition group-hover:text-brand-500" aria-hidden />}
@@ -313,8 +345,8 @@ export function DefinitionList({ items }: { items: [string, ReactNode][] }) {
     <dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
       {items.map(([k, v]) => (
         <div key={k} className="min-w-0">
-          <dt className="text-[13px] text-slate-500">{k}</dt>
-          <dd className="mt-0.5 text-[15px] font-medium break-words text-ink">{v ?? "—"}</dd>
+          <dt className="text-13px text-slate-500">{k}</dt>
+          <dd className="mt-0.5 text-15px font-medium break-words text-ink">{v ?? "—"}</dd>
         </div>
       ))}
     </dl>

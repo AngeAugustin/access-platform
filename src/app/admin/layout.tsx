@@ -12,12 +12,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/tutorats", label: "Tutorats", icon: "tutorings", mobile: true, section: "Activité" },
     { href: "/admin/paiements", label: "Paiements", icon: "payments", mobile: true, section: "Activité" },
     { href: "/admin/reclamations", label: "Réclamations", icon: "complaints", mobile: true, section: "Activité" },
+    { href: "/admin/referentiel", label: "Classes et matières", icon: "curriculum", section: "Configuration" },
     { href: "/admin/tarifs", label: "Tarifs et paramètres", icon: "settings", section: "Configuration" },
     ...(user.isSuperAdmin ? [{ href: "/admin/administrateurs", label: "Administrateurs", icon: "admins" as const, section: "Configuration" }] : []),
     { href: "/admin/journal", label: "Journal d'audit", icon: "journal", section: "Configuration" },
   ];
   return (
-    <AppShell user={user} items={items} root="/admin">
+    <AppShell user={user} items={items} root="/admin" wide>
       {children}
     </AppShell>
   );
