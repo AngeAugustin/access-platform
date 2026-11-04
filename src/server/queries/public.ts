@@ -53,7 +53,7 @@ export async function countValidatedEducators() {
   return db.educatorProfile.count({ where: { status: "VALIDATED", user: { status: "ACTIVE" } } });
 }
 
-// Avis laissés par les parents en fin de tutorat (seulement ceux avec un commentaire).
+// Avis laissés par les parents en fin d'accompagnement (seulement ceux avec un commentaire).
 // Un avis positif tiré au hasard, pour le panneau de la page de connexion.
 export async function featuredReview() {
   const where = { comment: { not: null }, rating: { gte: 4 } };

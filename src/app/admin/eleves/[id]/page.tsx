@@ -79,7 +79,7 @@ export default async function AdminChildPage({ params }: { params: Promise<{ id:
         actions={<PersonLink href={`/admin/parents/${child.parent.id}`} name={fullName(child.parent)} label="Parent" meta={child.parent.phone} />}
         metrics={
           <>
-            <Metric label="Tutorat" tone={active ? "green" : undefined}>
+            <Metric label="Accompagnement" tone={active ? "green" : undefined}>
               {active ? "En cours" : <span className="text-slate-400">Aucun</span>}
             </Metric>
             <Metric label="Séances faites">
@@ -119,10 +119,10 @@ export default async function AdminChildPage({ params }: { params: Promise<{ id:
             )}
           </Card>
 
-          <Card title="Tutorats">
+          <Card title="Accompagnements">
             {child.tutorings.length === 0 ? (
-              <Empty icon={BookOpenCheck} title="Aucun tutorat">
-                Le parent n&apos;a pas encore demandé de tutorat pour cet enfant.
+              <Empty icon={BookOpenCheck} title="Aucun accompagnement">
+                Le parent n&apos;a pas encore demandé d&apos;accompagnement pour cet enfant.
               </Empty>
             ) : (
               <ul className="-my-2 divide-y divide-slate-100">
@@ -178,11 +178,11 @@ export default async function AdminChildPage({ params }: { params: Promise<{ id:
             <dl className="space-y-3 text-sm">
               <div>
                 <dt className="text-13px text-slate-500">Matières préférées</dt>
-                <dd className="mt-0.5 font-medium text-ink">{child.favoriteSubjects || "—"}</dd>
+                <dd className="mt-0.5 font-medium text-ink">{child.favoriteSubjects || "-"}</dd>
               </div>
               <div>
                 <dt className="text-13px text-slate-500">Centres d&apos;intérêt</dt>
-                <dd className="mt-0.5 font-medium text-ink">{child.interests || "—"}</dd>
+                <dd className="mt-0.5 font-medium text-ink">{child.interests || "-"}</dd>
               </div>
               <div className="grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
                 <div>
@@ -191,7 +191,7 @@ export default async function AdminChildPage({ params }: { params: Promise<{ id:
                 </div>
                 <div>
                   <dt className="text-13px text-slate-500">NPI</dt>
-                  <dd className="mt-0.5 font-medium text-ink tabular-nums">{child.npi || "—"}</dd>
+                  <dd className="mt-0.5 font-medium text-ink tabular-nums">{child.npi || "-"}</dd>
                 </div>
               </div>
             </dl>

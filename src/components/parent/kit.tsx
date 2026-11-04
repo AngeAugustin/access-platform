@@ -82,3 +82,26 @@ export function Bar({ widthClass, className }: { widthClass: string; className?:
     </span>
   );
 }
+
+// Bascule du catalogue : éducateurs (cours) ou tuteurs (suivi au quotidien).
+export function CatalogSwitch({ current, query = "" }: { current: "educateurs" | "tuteurs"; query?: string }) {
+  const items = [
+    { key: "educateurs", href: `/parent/educateurs${query}`, label: "Éducateurs", hint: "Cours à domicile" },
+    { key: "tuteurs", href: `/parent/tuteurs${query}`, label: "Tuteurs", hint: "Suivi au quotidien" },
+  ] as const;
+  return (
+    <nav aria-label="Type d'intervenant" className="mb-4 grid grid-cols-2 gap-1 rounded-[18px] bg-slate-100 p-1">
+      {items.map((i) => (
+        <Link
+          key={i.key}
+          href={i.href}
+          aria-current={i.key === current ? "page" : undefined}
+          className={cx("rounded-[14px] px-3 py-2 text-center transition", i.key === current ? "bg-white shadow-[0_1px_2px_rgb(15_23_42/0.08)]" : "hover:bg-white/60")}
+        >
+          <span className={cx("block text-sm font-bold", i.key === current ? "text-ink" : "text-slate-600")}>{i.label}</span>
+          <span className="block text-xs text-slate-500">{i.hint}</span>
+        </Link>
+      ))}
+    </nav>
+  );
+}

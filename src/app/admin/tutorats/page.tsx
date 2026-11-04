@@ -9,7 +9,7 @@ import { TutoringBadge } from "@/components/status";
 import { Pagination } from "@/components/ui/pagination";
 import { paginate } from "@/lib/pagination";
 
-export const metadata = { title: "Tutorats" };
+export const metadata = { title: "Accompagnements" };
 
 export default async function AdminTutoringsPage({ searchParams }: { searchParams: Promise<{ statut?: string; contestees?: string; page?: string }> }) {
   await requireRole("ADMIN");
@@ -32,7 +32,7 @@ export default async function AdminTutoringsPage({ searchParams }: { searchParam
   });
   return (
     <>
-      <PageHeader title="Tutorats" subtitle={`${info.total} tutorat${info.total > 1 ? "s" : ""}`} />
+      <PageHeader title="Accompagnements" subtitle={`${info.total} accompagnement${info.total > 1 ? "s" : ""}`} />
       <form method="get" className="mb-4 flex flex-wrap gap-2">
         <select name="statut" defaultValue={statut ?? ""} className="field w-auto min-w-48" aria-label="Statut">
           <option value="">Tous les statuts</option>
@@ -48,7 +48,7 @@ export default async function AdminTutoringsPage({ searchParams }: { searchParam
         <button className={buttonClass("secondary")}>Filtrer</button>
       </form>
       {tutorings.length === 0 ? (
-        <EmptyState icon={BookOpenCheck} title="Aucun tutorat" />
+        <EmptyState icon={BookOpenCheck} title="Aucun accompagnement" />
       ) : (
         <Table head={["Réf.", "Élève", "Parent", "Éducateur", "Période", "Séances", "Statut"]}>
           {tutorings.map((t) => (
@@ -77,7 +77,7 @@ export default async function AdminTutoringsPage({ searchParams }: { searchParam
           ))}
         </Table>
       )}
-      <Pagination info={info} path="/admin/tutorats" params={{ statut, contestees }} label="tutorat" />
+      <Pagination info={info} path="/admin/tutorats" params={{ statut, contestees }} label="accompagnement" />
     </>
   );
 }

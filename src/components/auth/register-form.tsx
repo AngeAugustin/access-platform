@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, ChevronLeft, GraduationCap, IdCard, Lock, Mail, MapPin, Users } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, GraduationCap, IdCard, ListChecks, Lock, Mail, MapPin, Users } from "lucide-react";
 import { registerAction } from "@/server/actions/auth";
 import { fieldErrors, registerStepSchemas } from "@/lib/validation";
 import { Button, cx } from "@/components/ui";
@@ -23,6 +23,7 @@ import { useSyncAuthRole } from "@/components/auth/auth-panel";
 const roles = [
   { value: "PARENT", title: "Je suis parent", text: "Je cherche un éducateur pour mon enfant, du CI à la Terminale.", icon: Users },
   { value: "EDUCATOR", title: "Je suis éducateur", text: "Je donne des cours à domicile et je veux de nouveaux élèves.", icon: GraduationCap },
+  { value: "TUTOR", title: "Je suis tuteur", text: "Je veille, pour les parents, aux leçons, aux devoirs et aux notes des enfants.", icon: ListChecks },
 ] as const;
 
 const STEPS = [

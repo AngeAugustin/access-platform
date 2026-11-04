@@ -39,7 +39,7 @@ export function TutoringRequestForm({
         <Link href="/parent/enfants/nouveau" className="font-semibold text-brand-700 hover:text-brand-800">
           Inscrivez d&apos;abord votre enfant
         </Link>{" "}
-        pour demander un tutorat.
+        pour demander un accompagnement.
       </p>
     );
   }
@@ -115,10 +115,10 @@ export function TutoringRequestForm({
       ) : (
         <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Le tarif de cette classe n&apos;est pas encore défini par Access.</p>
       )}
-      <SubmitButton className="w-full" size="lg" pendingLabel="Création du tutorat…">
-        Confirmer le tutorat
+      <SubmitButton className="w-full" size="lg" pendingLabel="Création de l'accompagnement…">
+        Confirmer l&apos;accompagnement
       </SubmitButton>
-      <p className="text-center text-xs text-slate-400">L&apos;éducateur est prévenu immédiatement. Vous pouvez arrêter le tutorat à tout moment.</p>
+      <p className="text-center text-xs text-slate-400">L&apos;éducateur est prévenu immédiatement. Vous pouvez arrêter l&apos;accompagnement à tout moment.</p>
     </ActionForm>
   );
 }

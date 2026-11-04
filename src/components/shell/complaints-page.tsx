@@ -12,7 +12,7 @@ export async function ComplaintsPage({ user }: { user: CurrentUser }) {
   const complaints = await db.complaint.findMany({ where: { authorId: user.id }, orderBy: { createdAt: "desc" } });
   return (
     <>
-      <PageHeader title="Réclamations" subtitle="Un souci avec un tutorat, un paiement ou l'application ? L'équipe Access vous répond ici." />
+      <PageHeader title="Réclamations" subtitle="Un souci avec un accompagnement, un paiement ou l'application ? L'équipe Access vous répond ici." />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_1fr]">
         <Card title="Nouvelle réclamation" className="h-fit">
           <ComplaintForm />

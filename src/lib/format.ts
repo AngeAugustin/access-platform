@@ -11,14 +11,14 @@ export function formatFcfa(amount: number): string {
 }
 
 export function formatDate(date: Date | string | null | undefined): string {
-  if (!date) return "—";
+  if (!date) return "-";
   return new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, day: "2-digit", month: "short", year: "numeric" }).format(
     new Date(date),
   );
 }
 
 export function formatDateTime(date: Date | string | null | undefined): string {
-  if (!date) return "—";
+  if (!date) return "-";
   return new Intl.DateTimeFormat("fr-FR", {
     timeZone: TZ,
     day: "2-digit",

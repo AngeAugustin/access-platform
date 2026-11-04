@@ -118,7 +118,7 @@ export async function stopTutoringAction(_: ActionState, formData: FormData): Pr
     throw err;
   }
   revalidatePath(`/parent/tutorats/${parsed.data.tutoringId}`);
-  return { ok: true, message: "Le tutorat est arrêté. Les échéances ont été recalculées." };
+  return { ok: true, message: "L'accompagnement est arrêté. Les échéances ont été recalculées." };
 }
 
 export async function reviewLessonAction(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -157,7 +157,7 @@ export async function reviewEducatorAction(_: ActionState, formData: FormData): 
     where: { id: parsed.data.tutoringId, parentId: parent.id },
     include: { review: true, _count: { select: { lessons: true } } },
   });
-  if (!tutoring) return { ok: false, message: "Tutorat introuvable." };
+  if (!tutoring) return { ok: false, message: "Accompagnement introuvable." };
   if (tutoring.review) return { ok: false, message: "Vous avez déjà donné votre avis." };
   if (tutoring._count.lessons === 0) return { ok: false, message: "Vous pourrez noter l'éducateur après la première séance." };
   await db.review.create({

@@ -60,12 +60,12 @@ export function StopTutoringForm({ tutoringId }: { tutoringId: string }) {
   if (!open) {
     return (
       <Button variant="danger-soft" onClick={() => setOpen(true)}>
-        Arrêter le tutorat
+        Arrêter l&apos;accompagnement
       </Button>
     );
   }
   return (
-    <ActionForm toast action={stopTutoringAction} className="w-full max-w-md space-y-3 rounded-2xl border border-rose-200 bg-white p-4 shadow-soft" confirm={{ title: "Arrêter définitivement ce tutorat ?", description: "Cette action ne peut pas être annulée.", confirmLabel: "Arrêter le tutorat", tone: "danger" }}
+    <ActionForm toast action={stopTutoringAction} className="w-full max-w-md space-y-3 rounded-2xl border border-rose-200 bg-white p-4 shadow-soft" confirm={{ title: "Arrêter définitivement cet accompagnement ?", description: "Cette action ne peut pas être annulée.", confirmLabel: "Arrêter l'accompagnement", tone: "danger" }}
     >
       <FormMessage />
       <input type="hidden" name="tutoringId" value={tutoringId} />

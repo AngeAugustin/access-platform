@@ -136,7 +136,7 @@ export default async function AdminEducatorPage({ params }: { params: Promise<{ 
               {REQUIRED_DOCUMENTS.length - missingDocuments.length}
               <span className="text-sm font-normal text-slate-400"> / {REQUIRED_DOCUMENTS.length}</span>
             </Metric>
-            <Metric label="Tutorats">
+            <Metric label="Accompagnements">
               {activeTutorings} <span className="text-sm font-normal text-slate-400">en cours</span>
             </Metric>
             <Metric label="Avis des familles">
@@ -146,7 +146,7 @@ export default async function AdminEducatorPage({ params }: { params: Promise<{ 
                   <span className="text-sm font-normal text-slate-400">({reviewStats._count})</span>
                 </span>
               ) : (
-                <span className="text-slate-300">—</span>
+                <span className="text-slate-300">-</span>
               )}
             </Metric>
             <Metric label="Dernière connexion">
@@ -182,7 +182,7 @@ export default async function AdminEducatorPage({ params }: { params: Promise<{ 
                 <Info icon={IdCard} label="NPI" value={<span className="tabular-nums">{e.user.npi}</span>} />
                 <Info icon={Mail} label="E-mail" value={e.user.email} />
                 <Info icon={Phone} label="Téléphone" value={e.user.phone} />
-                <Info icon={House} label="Adresse" value={[e.user.address, e.user.city].filter(Boolean).join(", ") || "—"} />
+                <Info icon={House} label="Adresse" value={[e.user.address, e.user.city].filter(Boolean).join(", ") || "-"} />
                 <Info
                   icon={Cake}
                   label="Naissance"
@@ -192,12 +192,12 @@ export default async function AdminEducatorPage({ params }: { params: Promise<{ 
                         {formatDate(e.birthDate)} <span className="font-normal text-slate-400">({age(e.birthDate, now)} ans)</span>
                       </>
                     ) : (
-                      "—"
+                      "-"
                     )
                   }
                 />
-                <Info icon={Heart} label="Situation" value={e.maritalStatus || "—"} />
-                <Info icon={Wallet} label="Mobile Money" value={payoutAccount(e) ?? "—"} />
+                <Info icon={Heart} label="Situation" value={e.maritalStatus || "-"} />
+                <Info icon={Wallet} label="Mobile Money" value={payoutAccount(e) ?? "-"} />
               </dl>
             </Card>
             <Card title="Garants">
@@ -207,7 +207,7 @@ export default async function AdminEducatorPage({ params }: { params: Promise<{ 
                     <Avatar name={g.name || "?"} size={36} />
                     <div className="min-w-0 flex-1">
                       <p className={cx("truncate text-sm font-medium", g.name ? "text-ink" : "text-slate-400")}>{g.name || `Garant ${i + 1} non renseigné`}</p>
-                      <p className="truncate text-xs text-slate-500">{[g.phone, g.address].filter(Boolean).join(" · ") || "—"}</p>
+                      <p className="truncate text-xs text-slate-500">{[g.phone, g.address].filter(Boolean).join(" · ") || "-"}</p>
                     </div>
                     {g.phone && (
                       <a href={`tel:${g.phone}`} className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-ink" aria-label={`Appeler ${g.name ?? "le garant"}`}>
@@ -220,10 +220,10 @@ export default async function AdminEducatorPage({ params }: { params: Promise<{ 
             </Card>
           </div>
 
-          <Card title="Tutorats" action={e.tutorings.length >= 20 ? <span className="text-xs text-slate-400">20 derniers</span> : undefined}>
+          <Card title="Accompagnements" action={e.tutorings.length >= 20 ? <span className="text-xs text-slate-400">20 derniers</span> : undefined}>
             {e.tutorings.length === 0 ? (
-              <Empty icon={BookOpenCheck} title="Aucun tutorat pour l'instant">
-                {e.status === "VALIDATED" ? "Les tutorats demandés par les familles apparaîtront ici." : "Ils apparaîtront ici une fois le dossier validé."}
+              <Empty icon={BookOpenCheck} title="Aucun accompagnement pour l'instant">
+                {e.status === "VALIDATED" ? "Les accompagnements demandés par les familles apparaîtront ici." : "Ils apparaîtront ici une fois le dossier validé."}
               </Empty>
             ) : (
               <ul className="-my-2 divide-y divide-slate-100">
@@ -365,7 +365,7 @@ function TagGroup({ title, items, tone = "slate" }: { title: string; items: stri
             </span>
           ))
         ) : (
-          <span className="text-sm text-slate-400">—</span>
+          <span className="text-sm text-slate-400">-</span>
         )}
       </div>
     </div>

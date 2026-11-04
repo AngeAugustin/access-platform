@@ -98,7 +98,7 @@ export async function saveClassAction(_: ActionState, formData: FormData): Promi
     await db.$transaction([
       db.classLevel.update({ where: { id }, data: { name, cycle, active, subjects: { deleteMany: {}, create: links } } }),
       // Les fiches désignent la classe par son nom : un renommage est répercuté partout,
-      // sauf dans les tutorats, qui gardent la classe au moment du contrat.
+      // sauf dans les accompagnements, qui gardent la classe au moment du contrat.
       ...(renamed
         ? [
             db.child.updateMany({ where: { currentClass: current.name }, data: { currentClass: name } }),

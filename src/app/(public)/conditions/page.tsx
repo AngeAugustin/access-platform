@@ -11,8 +11,8 @@ const sections: LegalSection[] = [
     content: (
       <>
         <p>
-          Access est une plateforme qui met en relation des parents d&apos;élèves et des éducateurs indépendants pour du tutorat scolaire à domicile, du collège à la
-          terminale, à Cotonou et Abomey-Calavi. Elle assure la vérification des éducateurs, le suivi des séances, l&apos;encaissement des paiements et leur reversement.
+          Access est une plateforme qui met en relation des parents d&apos;élèves et des éducateurs indépendants pour de l&apos;accompagnement scolaire à domicile, du collège à la
+          terminale, sur l&apos;ensemble du territoire béninois. Elle assure la vérification des éducateurs, le suivi des séances, l&apos;encaissement des paiements et leur reversement.
         </p>
         <p>
           Les présentes conditions régissent l&apos;utilisation d&apos;Access par tous ses utilisateurs. Les accepter est nécessaire pour créer un compte. Access est édité
@@ -76,11 +76,11 @@ const sections: LegalSection[] = [
     content: (
       <ul>
         <li>
-          Le prix d&apos;un tutorat découle de la grille tarifaire par classe en vigueur à sa création. Il est affiché avant tout engagement et ne change pas en cours de
-          tutorat.
+          Le prix d&apos;un accompagnement découle de la grille tarifaire par classe en vigueur à sa création. Il est affiché avant tout engagement et ne change pas en cours de
+          accompagnement.
         </li>
         <li>
-          Le tutorat est réglé par échéances couvrant chacune quatre semaines, en ligne via FedaPay (MTN MoMo, Moov Money ou carte). Un rappel est envoyé avant chaque
+          L&apos;accompagnement est réglé par échéances couvrant chacune quatre semaines, en ligne via FedaPay (MTN MoMo, Moov Money ou carte). Un rappel est envoyé avant chaque
           échéance.
         </li>
         <li>
@@ -92,12 +92,12 @@ const sections: LegalSection[] = [
   },
   {
     id: "arret",
-    title: "Arrêt d'un tutorat",
+    title: "Arrêt d'un accompagnement",
     content: (
       <p>
-        Le parent peut arrêter un tutorat à tout moment, en indiquant un motif. La période en cours est recalculée au prorata des semaines entamées et payable sous une
+        Le parent peut arrêter un accompagnement à tout moment, en indiquant un motif. La période en cours est recalculée au prorata des semaines entamées et payable sous une
         semaine ; les échéances suivantes sont annulées. Les sommes déjà payées pour des semaines non effectuées font l&apos;objet d&apos;un examen par Access en vue
-        d&apos;un éventuel remboursement. Access peut aussi arrêter un tutorat, notamment en cas de manquement grave.
+        d&apos;un éventuel remboursement. Access peut aussi arrêter un accompagnement, notamment en cas de manquement grave.
       </p>
     ),
   },
@@ -110,7 +110,7 @@ const sections: LegalSection[] = [
           Une séance contestée par le parent est examinée par l&apos;équipe Access, qui peut la confirmer ou la retirer. Pour tout autre différend, une réclamation se
           dépose depuis l&apos;application ; Access y répond dans un délai raisonnable.
         </p>
-        <p>À la fin d&apos;un tutorat, le parent peut laisser un avis sur l&apos;éducateur. L&apos;avis doit être sincère et courtois ; Access peut retirer un avis abusif.</p>
+        <p>À la fin d&apos;un accompagnement, le parent peut laisser un avis sur l&apos;éducateur. L&apos;avis doit être sincère et courtois ; Access peut retirer un avis abusif.</p>
       </>
     ),
   },
@@ -159,7 +159,7 @@ export default function TermsPage() {
       eyebrow="Règles d'usage"
       title="Conditions d'utilisation"
       updatedAt={<ToComplete>date de publication</ToComplete>}
-      intro={<p>Les règles qui s&apos;appliquent aux familles, aux éducateurs et à Access, de l&apos;inscription à la fin d&apos;un tutorat.</p>}
+      intro={<p>Les règles qui s&apos;appliquent aux familles, aux éducateurs et à Access, de l&apos;inscription à la fin d&apos;un accompagnement.</p>}
       sections={sections}
     />
   );

@@ -6,6 +6,7 @@ import { notify } from "./notify";
 import { syncPayout, syncTransaction } from "./payments";
 import { notifyAdmins } from "./notify";
 import { fedapayConfigured } from "./fedapay";
+import { ensureOccurrences, markMissedOccurrences } from "./follow-up";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -99,11 +100,15 @@ export async function runDailyJobs(now = new Date()) {
     }
   }
 
+  // Suivi : passages manqués, puis ceux de la semaine qui vient.
+  const followUpsMissed = await markMissedOccurrences(now);
+  const followUpsPlanned = await ensureOccurrences({}, now);
+
   const purged = await db.$transaction([
     db.session.deleteMany({ where: { expiresAt: { lt: now } } }),
     db.passwordResetToken.deleteMany({ where: { OR: [{ expiresAt: { lt: now } }, { usedAt: { not: null } }] } }),
     db.rateLimit.deleteMany({ where: { resetAt: { lt: now } } }),
   ]);
 
-  return { completed, reminders, synced, payoutsConfirmed, payoutsStuck, purgedSessions: purged[0].count };
+  return { completed, reminders, synced, payoutsConfirmed, payoutsStuck, followUpsMissed, followUpsPlanned, purgedSessions: purged[0].count };
 }

@@ -6,7 +6,7 @@ type Slot = { day: WeekdayKey; slot: TimeSlotKey };
 const days = Object.keys(WEEKDAYS) as WeekdayKey[];
 const slots = Object.keys(TIME_SLOTS) as TimeSlotKey[];
 
-// Semaine type d'un éducateur : créneaux proposés, et parmi eux ceux déjà réservés par un tutorat.
+// Semaine type d'un éducateur : créneaux proposés, et parmi eux ceux déjà réservés par un accompagnement.
 export function AvailabilityGrid({ availabilities, booked }: { availabilities: Slot[]; booked: Slot[] }) {
   const has = (list: Slot[], day: WeekdayKey, slot: TimeSlotKey) => list.some((s) => s.day === day && s.slot === slot);
   return (

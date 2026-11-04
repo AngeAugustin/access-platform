@@ -35,6 +35,7 @@ export function DocumentUpload({
   accept,
   current,
   locked,
+  action = uploadDocumentAction,
 }: {
   type: string;
   label: string;
@@ -42,11 +43,13 @@ export function DocumentUpload({
   accept: string;
   current?: { id: string; name: string };
   locked?: boolean;
+  // Action d'envoi : dossier éducateur par défaut, dossier tuteur sinon.
+  action?: typeof uploadDocumentAction;
 }) {
   const Icon = current ? FileCheck2 : FileUp;
   return (
     <ActionForm
-      action={uploadDocumentAction}
+      action={action}
       className={cx("rounded-2xl border p-3.5", current ? "border-slate-200/80" : "border-dashed border-slate-300")}
       resetOnSuccess
       confirm={current ? { title: `Remplacer « ${label} » ?`, description: `Le fichier actuel (${current.name}) sera remplacé par le nouveau.`, confirmLabel: "Remplacer" } : undefined}

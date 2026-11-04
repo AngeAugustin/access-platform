@@ -10,7 +10,7 @@ export const AUDIT_CATEGORIES = {
   acces: "Connexions",
   comptes: "Comptes",
   educateurs: "Dossiers éducateurs",
-  tutorats: "Tutorats et séances",
+  tutorats: "Accompagnements et séances",
   paiements: "Paiements",
   configuration: "Configuration",
 } as const;
@@ -133,8 +133,8 @@ const DEFINITIONS: Record<string, Definition> = {
   },
   "educator.reject": { title: "Dossier refusé", category: "educateurs", tone: "rose", icon: "x", details: (m) => quote(m.reason) },
 
-  "tutoring.create": { title: "Tutorat créé", category: "tutorats", tone: "green", icon: "book" },
-  "tutoring.stop": { title: "Tutorat arrêté", category: "tutorats", tone: "amber", icon: "pause", details: (m) => quote(m.reason) },
+  "tutoring.create": { title: "Accompagnement créé", category: "tutorats", tone: "green", icon: "book" },
+  "tutoring.stop": { title: "Accompagnement arrêté", category: "tutorats", tone: "amber", icon: "pause", details: (m) => quote(m.reason) },
   "lesson.confirmed": { title: "Séance confirmée par le parent", category: "tutorats", tone: "green", icon: "check" },
   "lesson.disputed": { title: "Séance contestée par le parent", category: "tutorats", tone: "rose", icon: "alert", alert: true },
   "lesson.dispute_confirmed": { title: "Contestation tranchée : séance maintenue", category: "tutorats", tone: "brand", icon: "check" },

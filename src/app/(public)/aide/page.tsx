@@ -12,7 +12,7 @@ const topics: { id: string; title: string; items: Faq[] }[] = [
     id: "compte",
     title: "Mon compte",
     items: [
-      { q: "Qui peut créer un compte ?", a: "Les parents d'élèves et les éducateurs de Cotonou et Abomey-Calavi. L'inscription demande votre NPI, une adresse e-mail et un numéro de téléphone." },
+      { q: "Qui peut créer un compte ?", a: "Les parents d'élèves, les éducateurs et les tuteurs, partout au Bénin. L'inscription demande votre NPI, une adresse e-mail et un numéro de téléphone." },
       {
         q: "J'ai oublié mon mot de passe.",
         a: (
@@ -49,7 +49,7 @@ const topics: { id: string; title: string; items: Faq[] }[] = [
         ),
       },
       { q: "Que signifient la note et le niveau ?", a: "Ils sont attribués par l'équipe Access à la validation du dossier, d'après le parcours et l'expérience de l'éducateur. Les avis des familles s'affichent à côté." },
-      { q: "Puis-je changer d'éducateur ?", a: "Oui : arrêtez le tutorat en cours en indiquant le motif, puis créez-en un nouveau avec un autre éducateur." },
+      { q: "Puis-je changer d'éducateur ?", a: "Oui : arrêtez l'accompagnement en cours en indiquant le motif, puis créez-en un nouveau avec un autre éducateur." },
     ],
   },
   {
@@ -58,7 +58,7 @@ const topics: { id: string; title: string; items: Faq[] }[] = [
     items: [
       { q: "Comment suis-je informé d'une séance ?", a: "Après chaque cours, l'éducateur saisit un compte rendu. Vous recevez une notification et le confirmez ou le contestez depuis votre espace." },
       { q: "Que se passe-t-il si je conteste une séance ?", a: "L'éducateur et l'équipe Access sont prévenus. L'équipe examine la séance, puis la confirme ou la retire ; vous êtes informé de sa décision." },
-      { q: "Les créneaux peuvent-ils changer ?", a: "Les créneaux sont fixés à la création du tutorat. Pour un empêchement ponctuel, prévenez l'éducateur directement ; pour un changement durable, contactez l'équipe Access." },
+      { q: "Les créneaux peuvent-ils changer ?", a: "Les créneaux sont fixés à la création de l'accompagnement. Pour un empêchement ponctuel, prévenez l'éducateur directement ; pour un changement durable, contactez l'équipe Access." },
     ],
   },
   {
@@ -66,7 +66,7 @@ const topics: { id: string; title: string; items: Faq[] }[] = [
     title: "Les paiements",
     items: [
       {
-        q: "Combien coûte un tutorat ?",
+        q: "Combien coûte un accompagnement ?",
         a: (
           <>
             Le tarif dépend de la classe. Consultez la grille et le simulateur sur la page <Link href="/tarifs">Tarifs</Link>.

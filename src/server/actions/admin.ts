@@ -71,7 +71,7 @@ export async function rejectEducatorAction(_: ActionState, formData: FormData): 
   const { educatorId, reason } = parsed.data;
   const profile = await db.educatorProfile.findUnique({ where: { id: educatorId }, include: { _count: { select: { bookedSlots: true } } } });
   if (!profile) return { ok: false, message: "Dossier introuvable." };
-  if (profile._count.bookedSlots > 0) return { ok: false, message: "Cet éducateur a des tutorats en cours : arrêtez-les ou suspendez le compte." };
+  if (profile._count.bookedSlots > 0) return { ok: false, message: "Cet éducateur a des accompagnements en cours : arrêtez-les ou suspendez le compte." };
   await db.educatorProfile.update({ where: { id: educatorId }, data: { status: "REJECTED", rejectionReason: reason } });
   await audit(admin.id, "educator.reject", "EducatorProfile", educatorId, { reason });
   await notify({
@@ -198,7 +198,7 @@ export async function saveTariffAction(_: ActionState, formData: FormData): Prom
   await db.tariff.upsert({ where: { classLevel }, create: parsed.data, update: rest });
   await audit(admin.id, "tariff.save", "Tariff", classLevel, rest);
   revalidatePath("/admin/tarifs");
-  return { ok: true, message: `Tarif ${classLevel} enregistré. Il s'applique aux nouveaux tutorats.` };
+  return { ok: true, message: `Tarif ${classLevel} enregistré. Il s'applique aux nouveaux accompagnements.` };
 }
 
 export async function saveSettingsAction(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -333,7 +333,7 @@ export async function markRefundDoneAction(_: ActionState, formData: FormData): 
     userId: installment.tutoring.parentId,
     type: "refund.done",
     title: "Remboursement effectué",
-    body: `Access vous a remboursé ${formatFcfa(installment.refundAmount ?? 0)} pour le tutorat de ${fullName(installment.tutoring.child)}.`,
+    body: `Access vous a remboursé ${formatFcfa(installment.refundAmount ?? 0)} pour l'accompagnement de ${fullName(installment.tutoring.child)}.`,
     link: `/parent/tutorats/${installment.tutoringId}`,
     email: true,
   });
@@ -352,7 +352,7 @@ export async function adminStopTutoringAction(_: ActionState, formData: FormData
     throw err;
   }
   revalidatePath(`/admin/tutorats/${parsed.data.tutoringId}`);
-  return { ok: true, message: "Tutorat arrêté." };
+  return { ok: true, message: "Accompagnement arrêté." };
 }
 
 const disputeSchema = z.object({ lessonId: z.string().min(1), decision: z.enum(["CONFIRMED", "REMOVE"]) });

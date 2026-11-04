@@ -57,7 +57,7 @@ export default async function CurriculumPage({ searchParams }: { searchParams: P
           >
             <ClassList classes={classes} subjects={subjects} />
           </Card>
-          <Card title="Ajouter une classe" description="Fixez ensuite son tarif dans « Tarifs et paramètres » : sans tarif, aucun tutorat ne peut être créé." className="xl:sticky xl:top-24">
+          <Card title="Ajouter une classe" description="Fixez ensuite son tarif dans « Tarifs et paramètres » : sans tarif, aucun accompagnement ne peut être créé." className="xl:sticky xl:top-24">
             <NewClassForm subjects={subjects} />
           </Card>
         </div>

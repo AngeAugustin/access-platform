@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, BellRing, Check, ClipboardCheck, Plus, ShieldCheck, Smartphone, Wallet, type LucideIcon } from "lucide-react";
+import { ArrowRight, BellRing, BookOpen, Camera, Check, ClipboardCheck, NotebookPen, Plus, School, ShieldCheck, Smartphone, Wallet, type LucideIcon } from "lucide-react";
 import { CtaBand, dots, eyebrow, IconBox, pill, pillDark, pillLight, sectionTitle } from "@/components/marketing";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { ROLE_HOME } from "@/lib/constants";
+import { formatFcfa } from "@/lib/format";
+import { getSettings } from "@/server/services/settings";
 import { cx } from "@/components/ui";
 
 // Moyens de paiement proposés par FedaPay ; dimensions réelles des fichiers (hauteur affichée fixée en CSS).
@@ -36,6 +38,13 @@ const educatorPoints = [
   "Un suivi clair de vos élèves et de vos séances",
 ];
 
+// Ce que le parent peut confier au tuteur.
+const followUpActions = [
+  { icon: BookOpen, title: "Les leçons du soir", text: "Le tuteur fait réciter les leçons du jour avant le coucher." },
+  { icon: NotebookPen, title: "Les devoirs", text: "Il vérifie les cahiers et fait terminer ce qui manque, photo à l'appui." },
+  { icon: School, title: "Les visites à l'école", text: "Il passe consulter les notes et rencontre l'enseignant si besoin." },
+];
+
 // Aperçu d'une grille de disponibilités : true = créneau ouvert.
 const slots = [true, false, true, true, false, false, true, false, true, false];
 
@@ -46,13 +55,20 @@ const faq = [
   },
   {
     q: "Comment se passe le paiement ?",
-    a: "Le tutorat est réglé par échéances de quatre semaines, en ligne, par MTN MoMo, Moov Money ou carte. Vous recevez un rappel avant chaque échéance.",
+    a: "L'accompagnement est réglé par échéances de quatre semaines, en ligne, par MTN MoMo, Moov Money ou carte. Vous recevez un rappel avant chaque échéance.",
   },
   {
     q: "Et si une séance ne s'est pas bien passée ?",
     a: "Après chaque séance, vous confirmez ou contestez le compte rendu de l'éducateur. Une séance contestée est examinée par l'équipe Access.",
   },
-  { q: "Dans quelles villes Access est-il disponible ?", a: "Access est disponible à Cotonou et Abomey-Calavi." },
+  {
+    q: "Quelle différence entre un éducateur et un tuteur ?",
+    a: "L'éducateur donne des cours à domicile dans ses matières. Le tuteur assure le suivi du quotidien : il vérifie les leçons et les devoirs, passe à l'école consulter les notes et vous fait un retour après chaque action. Les deux sont vérifiés par Access, et vous pouvez faire appel aux deux.",
+  },
+  {
+    q: "Où Access est-il disponible ?",
+    a: "Partout au Bénin. Chaque éducateur et chaque tuteur indique les communes et les quartiers où il intervient : vous trouvez ceux qui sont près de chez vous.",
+  },
 ];
 
 function MoreLink({ href, children, tone = "dark" }: { href: string; children: React.ReactNode; tone?: "dark" | "light" }) {
@@ -140,6 +156,7 @@ function PhonePreview() {
 export default async function HomePage() {
   const user = await getCurrentUser();
   if (user) redirect(ROLE_HOME[user.role]);
+  const settings = await getSettings();
 
   return (
     <div className="overflow-hidden text-ink">
@@ -147,8 +164,8 @@ export default async function HomePage() {
       <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 px-4 pt-16 pb-24 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:pt-20">
         <div className="min-w-0">
           <p className="inline-flex items-center gap-2.5 rounded-full bg-brand-50 py-1.5 pr-3.5 pl-1.5 text-sm font-medium text-brand-700">
-            <span className="rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white">Tutorat à domicile</span>
-            Cotonou et Abomey-Calavi
+            <span className="rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white">Accompagnement à domicile</span>
+            Partout au Bénin
           </p>
           <h1 className="mt-7 font-display text-[clamp(2.875rem,6.2vw,5.375rem)] leading-[0.98] font-bold tracking-[-0.035em]">
             Le bon répétiteur,
@@ -174,7 +191,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <ul className="mt-10 flex flex-wrap gap-x-7 gap-y-3 text-15px text-slate-600">
-            {["Éducateurs vérifiés", "Compte rendu de chaque séance", "MTN et Moov Money"].map((t) => (
+            {["Éducateurs et tuteurs vérifiés", "Un retour après chaque séance", "MTN et Moov Money"].map((t) => (
               <li key={t} className="flex items-center gap-2">
                 <Check className="size-5 text-emerald-600" strokeWidth={2} aria-hidden /> {t}
               </li>
@@ -282,6 +299,78 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Suivi au quotidien */}
+      <section id="suivi" className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-24 sm:px-6 sm:pb-30">
+        <div className="grid grid-cols-1 items-center gap-12 rounded-[40px] bg-accent-50 p-8 sm:p-12 lg:grid-cols-[1.15fr_1fr] lg:p-16">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold tracking-[0.08em] text-accent-700 uppercase">Nouveau · Le suivi au quotidien</p>
+            <h2 className={cx("mt-3.5", sectionTitle)}>Un tuteur veille sur les leçons et les devoirs, chaque soir.</h2>
+            <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-slate-700">
+              Vous choisissez les actions et les jours. Le tuteur les fait et vous envoie un retour après chacune, avec photos et notes relevées. Vous suivez tout depuis votre
+              téléphone, même au travail.
+            </p>
+            <ul className="mt-8 space-y-4">
+              {followUpActions.map((a) => (
+                <li key={a.title} className="flex gap-3.5">
+                  <IconBox icon={a.icon} className="bg-white text-accent-600" />
+                  <span>
+                    <span className="block font-display text-lg font-bold tracking-tight">{a.title}</span>
+                    <span className="block text-15px leading-relaxed text-slate-600">{a.text}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
+              <Link href="/inscription?role=PARENT" className={pillDark}>
+                Trouver un tuteur
+                <ArrowRight className="size-5" aria-hidden />
+              </Link>
+              <p className="text-15px text-slate-600">
+                <span className="font-semibold text-ink">{formatFcfa(settings.followUpFirstChild)}</span> par mois, puis {formatFcfa(settings.followUpExtraChild)} par enfant supplémentaire
+              </p>
+            </div>
+          </div>
+          <div className="flex min-w-0 flex-col gap-3" aria-hidden>
+            <div className="rounded-3xl bg-white p-5 shadow-[0_20px_40px_-24px_rgb(232_119_34/0.45)]">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-ink">Malik · Devoirs faits</p>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Fait</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-400">Mardi · retour à 19:42</p>
+              <p className="mt-3 text-15px leading-relaxed text-slate-600">Exercices de maths terminés, rédaction relue ensemble. Il reste la leçon d&apos;histoire pour demain.</p>
+              <div className="mt-3 flex gap-2">
+                {["bg-brand-100", "bg-accent-100"].map((c) => (
+                  <span key={c} className={cx("flex size-16 items-center justify-center rounded-xl text-slate-400", c)}>
+                    <Camera className="size-5" />
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-3xl bg-white p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-ink">Sènan · Visite à l&apos;école</p>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Fait</span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {[
+                  ["Français", "14"],
+                  ["Maths", "11,5"],
+                  ["SVT", "16"],
+                ].map(([m, n]) => (
+                  <span key={m} className="rounded-lg bg-slate-100 px-2.5 py-1 text-13px text-slate-700">
+                    {m} <span className="font-semibold text-ink">{n}</span>/20
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-3xl bg-brand-600 px-5 py-4 text-white">
+              <span className="text-sm text-brand-100">Cette semaine</span>
+              <span className="font-display text-2xl font-bold">9 / 10 faites</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Éducateurs */}
       <section id="educateurs" className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-24 sm:px-6 sm:pb-30">
         <div className="relative flex flex-col gap-12 overflow-hidden rounded-[40px] bg-brand-950 p-8 text-white sm:p-12 lg:flex-row lg:items-center lg:p-18">
@@ -305,6 +394,9 @@ export default async function HomePage() {
               </Link>
               <Link href="/devenir-educateur" className="font-semibold text-white underline-offset-4 hover:underline">
                 Comment ça marche pour les éducateurs
+              </Link>
+              <Link href="/devenir-tuteur" className="font-semibold text-accent-300 underline-offset-4 hover:underline">
+                Devenir tuteur
               </Link>
             </div>
           </div>

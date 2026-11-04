@@ -8,6 +8,7 @@ const navLinks = [
   { href: "/fonctionnement", label: "Fonctionnement" },
   { href: "/tarifs", label: "Tarifs" },
   { href: "/nos-educateurs", label: "Éducateurs" },
+  { href: "/devenir-tuteur", label: "Tuteurs" },
   { href: "/confiance", label: "Confiance" },
   { href: "/aide", label: "Aide" },
 ];
@@ -19,16 +20,18 @@ const footerColumns = [
       { href: "/fonctionnement", label: "Comment ça marche" },
       { href: "/tarifs", label: "Tarifs" },
       { href: "/nos-educateurs", label: "Nos éducateurs" },
+      { href: "/fonctionnement#suivi", label: "Le suivi au quotidien" },
       { href: "/matieres", label: "Matières et classes" },
       { href: "/avis", label: "Avis des familles" },
     ],
   },
   {
-    title: "Éducateurs",
+    title: "Intervenants",
     links: [
       { href: "/devenir-educateur", label: "Devenir éducateur" },
+      { href: "/devenir-tuteur", label: "Devenir tuteur" },
       { href: "/fonctionnement#educateurs", label: "Le suivi des séances" },
-      { href: "/inscription?role=EDUCATOR", label: "Créer mon compte" },
+      { href: "/inscription", label: "Créer mon compte" },
     ],
   },
   {
@@ -91,7 +94,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.4fr_repeat(4,minmax(0,1fr))]">
           <div className="col-span-2 lg:col-span-1">
             <Logo />
-            <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-500">Le tutorat scolaire à domicile, en confiance. Cotonou et Abomey-Calavi.</p>
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-500">L&apos;accompagnement scolaire à domicile et le suivi au quotidien, en confiance. Partout au Bénin.</p>
           </div>
           {footerColumns.map((c) => (
             <div key={c.title}>

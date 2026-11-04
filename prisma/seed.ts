@@ -1,5 +1,5 @@
 // Initialisation de la base : super-administrateur, grille tarifaire, paramètres.
-// Données de démonstration (parent, éducateur, deux enfants, un tutorat en cours) avec SEED_DEMO=1, jamais en production.
+// Données de démonstration (parent, éducateur, deux enfants, un accompagnement en cours) avec SEED_DEMO=1, jamais en production.
 import "dotenv/config";
 import { randomBytes } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -20,7 +20,7 @@ function exampleRate(classLevel: string) {
   return 1000;
 }
 
-// Comptes de démo (développement uniquement) : admin@, parent@ et educateur@access.local, mot de passe DEMO_PASSWORD.
+// Comptes de démo (développement uniquement) : admin@, parent@, educateur@ et tuteur@access.local, mot de passe DEMO_PASSWORD.
 const DEMO = process.env.SEED_DEMO === "1";
 const DEMO_PASSWORD = "password";
 
@@ -158,11 +158,35 @@ async function main() {
     }
     await seedDemoTutoring(parent.id, profile.id);
     await seedDemoCommunity(demoPassword);
-    console.log(`Démo : admin@access.local / parent@access.local / educateur@access.local (mot de passe ${DEMO_PASSWORD}), éducateur ${profile.id}`);
+    // Tuteur validé, pour le module Suivi.
+    const tutorUser = await db.user.upsert({
+      where: { email: "tuteur@access.local" },
+      update: { passwordHash: demoPassword },
+      create: { email: "tuteur@access.local", npi: "5555555555", phone: "0161000005", firstName: "Rachidatou", lastName: "Adjovi", city: "Cotonou", role: "TUTOR", passwordHash: demoPassword },
+    });
+    await db.tutorProfile.upsert({
+      where: { userId: tutorUser.id },
+      update: {},
+      create: {
+        userId: tutorUser.id,
+        birthDate: new Date("1996-05-20"),
+        zone: "Fidjrossè (Cotonou)",
+        occupation: "Étudiant(e)",
+        bio: "Étudiante en sciences de l'éducation, je suis des enfants du primaire et du collège depuis trois ans : leçons du soir, devoirs, lien avec les enseignants.",
+        guarantorName: "Pascal Adjovi",
+        guarantorPhone: "0161000006",
+        payoutPhone: "0161000005",
+        payoutOperator: "MTN",
+        status: "VALIDATED",
+        submittedAt: new Date(),
+        validatedAt: new Date(),
+      },
+    });
+    console.log(`Démo : admin@access.local / parent@access.local / educateur@access.local / tuteur@access.local (mot de passe ${DEMO_PASSWORD}), éducateur ${profile.id}`);
   }
 }
 
-// Tutorat de démo en cours (Malik avec Koffi, lundi et samedi) : séances confirmées et à confirmer,
+// Accompagnement de démo en cours (Malik avec Koffi, lundi et samedi) : séances confirmées et à confirmer,
 // une échéance payée et la suivante en attente. Créé une seule fois.
 async function seedDemoTutoring(parentId: string, educatorId: string) {
   if (await db.tutoring.findFirst({ where: { parentId } })) return;

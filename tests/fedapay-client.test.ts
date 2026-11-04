@@ -22,7 +22,7 @@ function fakeFedapay(routes: Record<string, (body?: Record<string, unknown>) => 
 
 const params = {
   amount: 15000,
-  description: "Access ECH-1 — Kofi",
+  description: "Access ECH-1 · Kofi",
   callbackUrl: "http://localhost:3000/parent/paiements/retour",
   customer: { firstname: "Aïcha", lastname: "Adjovi", email: "aicha@example.com", phone: "+2290197000000" },
   metadata: { paymentId: "pay_1" },

@@ -117,6 +117,7 @@ export const COMPLAINT_SUBJECTS = [
 export const ROLE_LABELS = {
   PARENT: "Parent",
   EDUCATOR: "Éducateur",
+  TUTOR: "Tuteur",
   ADMIN: "Administrateur",
 } as const;
 
@@ -129,6 +130,7 @@ export const ACCOUNT_STATUS = {
 export const ROLE_HOME = {
   PARENT: "/parent",
   EDUCATOR: "/educateur",
+  TUTOR: "/tuteur",
   ADMIN: "/admin",
 } as const;
 
@@ -137,4 +139,47 @@ export const DEFAULT_SETTINGS = {
   commissionPercent: 15,
   maxDurationWeeks: 36,
   weeksPerInstallment: 4,
+  // Suivi : forfait mensuel (FCFA) pour le premier enfant, puis par enfant supplémentaire, et commission Access.
+  followUpFirstChild: 15000,
+  followUpExtraChild: 10000,
+  followUpCommissionPercent: 20,
 } as const;
+
+// Suivi (module tuteur).
+export const TUTOR_REQUIRED_DOCUMENTS = ["ID_CARD", "CRIMINAL_RECORD", "PHOTO"] as const;
+
+export const FOLLOW_UP_STATUS = {
+  REQUESTED: "En attente du tuteur",
+  ACTIVE: "Actif",
+  DECLINED: "Refusé",
+  CANCELLED: "Demande retirée",
+  ENDED: "Arrêté",
+} as const;
+
+export const TASK_KINDS = {
+  LESSONS: "Leçons apprises",
+  HOMEWORK: "Devoirs faits",
+  SCHOOL_VISIT: "Visite à l'école",
+  OTHER: "Autre action",
+} as const;
+
+export type TaskKind = keyof typeof TASK_KINDS;
+
+// Modèles proposés au parent : il les ajuste ensuite (enfants, jours, heure, consignes).
+export const TASK_TEMPLATES: { kind: TaskKind; title: string; instructions: string; days: WeekdayKey[]; intervalWeeks: number; dueHour: number; photoRequired: boolean }[] = [
+  { kind: "LESSONS", title: "Vérifier les leçons du jour", instructions: "Faire réciter les leçons du jour avant le coucher.", days: ["MONDAY", "TUESDAY", "THURSDAY", "FRIDAY"], intervalWeeks: 1, dueHour: 21, photoRequired: false },
+  { kind: "HOMEWORK", title: "S'assurer que les devoirs sont faits", instructions: "Vérifier les cahiers et faire terminer ce qui manque.", days: ["WEDNESDAY", "SUNDAY"], intervalWeeks: 1, dueHour: 20, photoRequired: true },
+  { kind: "SCHOOL_VISIT", title: "Passer à l'école consulter les notes", instructions: "Rencontrer l'enseignant si possible et relever les dernières notes.", days: ["FRIDAY"], intervalWeeks: 2, dueHour: 17, photoRequired: false },
+  { kind: "OTHER", title: "", instructions: "", days: ["SATURDAY"], intervalWeeks: 1, dueHour: 18, photoRequired: false },
+];
+
+export const TASK_INTERVALS = { 1: "Chaque semaine", 2: "Toutes les 2 semaines", 4: "Toutes les 4 semaines" } as const;
+
+export const OCCURRENCE_RESULTS = {
+  DONE: "Fait",
+  PARTIAL: "En partie",
+  NOT_DONE: "Non fait",
+} as const;
+
+// Délai laissé au tuteur après l'heure limite pour faire son retour (une action du soir peut être rapportée le lendemain matin).
+export const REPORT_GRACE_HOURS = 14;

@@ -10,7 +10,7 @@ import { Avatar } from "@/components/avatar";
 import { TutoringBadge } from "@/components/status";
 import { Bar, ScreenTitle, panel } from "@/components/parent/kit";
 
-export const metadata = { title: "Suivis" };
+export const metadata = { title: "Cours" };
 
 export default async function TutoringsPage() {
   const user = await requireRole("PARENT");
@@ -26,9 +26,9 @@ export default async function TutoringsPage() {
   const now = new Date();
   return (
     <>
-      <ScreenTitle eyebrow="Les tutorats de vos enfants" title="Suivis" />
+      <ScreenTitle eyebrow="Les accompagnements de vos enfants" title="Cours" />
       {tutorings.length === 0 ? (
-        <EmptyState icon={BookOpenCheck} title="Aucun tutorat pour l'instant" action={<LinkButton href="/parent/educateurs">Trouver un éducateur</LinkButton>} />
+        <EmptyState icon={BookOpenCheck} title="Aucun accompagnement pour l'instant" action={<LinkButton href="/parent/educateurs">Trouver un éducateur</LinkButton>} />
       ) : (
         <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {tutorings.map((t) => {

@@ -10,7 +10,7 @@ import { getSettings } from "@/server/services/settings";
 
 export const metadata: Metadata = {
   title: "Devenir éducateur",
-  description: "Donnez des cours à domicile à Cotonou et Abomey-Calavi : des familles près de chez vous, des paiements garantis sur votre Mobile Money.",
+  description: "Donnez des cours à domicile partout au Bénin : des familles près de chez vous, des paiements garantis sur votre Mobile Money.",
 };
 
 export default async function BecomeEducatorPage() {
@@ -38,7 +38,7 @@ export default async function BecomeEducatorPage() {
         }
       >
         <p>
-          Access vous présente à des familles de Cotonou et Abomey-Calavi qui cherchent un répétiteur pour leur enfant, du collège à la terminale. Vous choisissez vos
+          Access vous présente à des familles de votre commune qui cherchent un répétiteur pour leur enfant, du collège à la terminale. Vous choisissez vos
           matières, vos classes, votre zone et vos créneaux ; nous nous occupons de l&apos;encaissement.
         </p>
       </PageHero>
@@ -70,7 +70,7 @@ export default async function BecomeEducatorPage() {
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_1fr]">
           <div className="space-y-4 rounded-[28px] bg-canvas p-8 text-[17px] leading-relaxed text-slate-600 sm:p-10">
             <p>
-              Le prix d&apos;un tutorat dépend de la classe de l&apos;élève (voir les <Link href="/tarifs" className="font-semibold text-brand-700 hover:underline">tarifs</Link>
+              Le prix d&apos;un accompagnement dépend de la classe de l&apos;élève (voir les <Link href="/tarifs" className="font-semibold text-brand-700 hover:underline">tarifs</Link>
               ). Les familles paient par échéances de {weeks} semaines.
             </p>
             <p>
@@ -137,7 +137,7 @@ export default async function BecomeEducatorPage() {
             { title: "Créez votre compte", text: "Votre identité, votre NPI et vos coordonnées, en quelques minutes." },
             { title: "Complétez votre dossier", text: "Pièces justificatives, matières, disponibilités et garants, puis transmettez-le." },
             { title: "Validation par Access", text: "L'équipe examine le dossier et vous attribue une note et un niveau. En cas de refus, le motif vous est indiqué pour corriger." },
-            { title: "Recevez vos élèves", text: "Votre profil est proposé aux familles. Vous êtes notifié à chaque nouveau tutorat." },
+            { title: "Recevez vos élèves", text: "Votre profil est proposé aux familles. Vous êtes notifié à chaque nouvel accompagnement." },
           ]}
         />
       </Section>

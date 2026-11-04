@@ -62,7 +62,7 @@ export default async function AdminDashboard() {
         <Stat label="Parents" value={parents} icon={Users} href="/admin/parents" />
         <Stat label="Éducateurs vérifiés" value={educators} icon={GraduationCap} href="/admin/educateurs" tone="green" />
         <Stat label="Élèves inscrits" value={children} icon={Smile} href="/admin/eleves" tone="amber" />
-        <Stat label="Tutorats en cours" value={activeTutorings} icon={BookOpenCheck} href="/admin/tutorats" tone="slate" />
+        <Stat label="Accompagnements en cours" value={activeTutorings} icon={BookOpenCheck} href="/admin/tutorats" tone="slate" />
       </div>
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_1fr]">
         <Card title="À traiter" padded={false}>

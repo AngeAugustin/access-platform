@@ -45,7 +45,7 @@ export default async function AdminChildrenPage({ searchParams }: { searchParams
       {children.length === 0 ? (
         <EmptyState icon={Smile} title="Aucun élève" />
       ) : (
-        <Table head={["Élève", "Classe", "École", "Parent", "Tutorats en cours", "Inscrit le"]}>
+        <Table head={["Élève", "Classe", "École", "Parent", "Accompagnements en cours", "Inscrit le"]}>
           {children.map((c) => (
             <tr key={c.id}>
               <Td>
@@ -54,7 +54,7 @@ export default async function AdminChildrenPage({ searchParams }: { searchParams
                 </Link>
               </Td>
               <Td>{c.currentClass}</Td>
-              <Td>{c.currentSchool ?? "—"}</Td>
+              <Td>{c.currentSchool ?? "-"}</Td>
               <Td>
                 <Link href={`/admin/parents/${c.parentId}`} className="font-medium text-brand-700 hover:text-brand-800">
                   {fullName(c.parent)}

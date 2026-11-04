@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Bell } from "lucide-react";
+import { ArrowLeftRight, Bell } from "lucide-react";
 import { db } from "@/lib/db";
 import type { CurrentUser } from "@/lib/auth/dal";
 import { ROLE_LABELS } from "@/lib/constants";
@@ -14,12 +14,15 @@ import { LogoutButton } from "./logout-button";
 
 // `wide` : back-office, tableaux et listes profitent de toute la largeur ; marges latérales réduites.
 // `floatingNav` : barre d'onglets mobile en pilule sombre (espace parent).
+// `space` : libellé de l'espace s'il diffère du rôle (éducateur dans son espace tuteur) ; `switchTo` : lien vers l'autre espace.
 export async function AppShell({
   user,
   items,
   root,
   wide = false,
   floatingNav = false,
+  space,
+  switchTo,
   children,
 }: {
   user: CurrentUser;
@@ -27,6 +30,8 @@ export async function AppShell({
   root: string;
   wide?: boolean;
   floatingNav?: boolean;
+  space?: string;
+  switchTo?: { href: string; label: string };
   children: ReactNode;
 }) {
   const unread = await db.notification.count({ where: { userId: user.id, readAt: null } });
@@ -50,7 +55,7 @@ export async function AppShell({
                 <Avatar name={name} size={36} />
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold text-ink">{name}</span>
-                  <span className="block truncate text-xs text-slate-500">{ROLE_LABELS[user.role]}</span>
+                  <span className="block truncate text-xs text-slate-500">{space ?? ROLE_LABELS[user.role]}</span>
                 </span>
               </Link>
               <LogoutButton />
@@ -65,9 +70,16 @@ export async function AppShell({
             </div>
             <p className="hidden items-center gap-2 text-sm text-slate-500 lg:flex">
               <span className="size-2 rounded-full bg-emerald-500" aria-hidden />
-              Espace {ROLE_LABELS[user.role].toLowerCase()}
+              Espace {(space ?? ROLE_LABELS[user.role]).toLowerCase()}
             </p>
             <div className="flex items-center gap-1.5">
+              {switchTo && (
+                <Link href={switchTo.href} className="flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-slate-600 transition hover:bg-white hover:text-ink">
+                  <ArrowLeftRight className="size-4" aria-hidden />
+                  <span className="hidden sm:inline">{switchTo.label}</span>
+                  <span className="sr-only sm:hidden">{switchTo.label}</span>
+                </Link>
+              )}
               <Link
                 href={`${root}/notifications`}
                 className="relative flex size-10 items-center justify-center rounded-xl text-slate-600 transition hover:bg-white hover:text-ink"

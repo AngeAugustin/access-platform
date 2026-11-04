@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZONES, parseZones } from "@/lib/zones";
-import { COMPLAINT_SUBJECTS, CYCLES, DEGREE_LEVELS, MARITAL_STATUSES, MAX_AVAILABILITIES, MAX_EXPERIENCES, MOBILE_OPERATORS, OCCUPATIONS, SUBJECT_LEVELS, TIME_SLOTS, WEEKDAYS } from "@/lib/constants";
+import { COMPLAINT_SUBJECTS, CYCLES, DEGREE_LEVELS, MARITAL_STATUSES, MAX_AVAILABILITIES, MAX_EXPERIENCES, MOBILE_OPERATORS, OCCUPATIONS, OCCURRENCE_RESULTS, SUBJECT_LEVELS, TASK_KINDS, TIME_SLOTS, WEEKDAYS } from "@/lib/constants";
 
 // État renvoyé par les actions serveur aux formulaires (useActionState).
 export type ActionState = {
@@ -58,7 +58,7 @@ const dateString = (label: string) =>
 // ---------------------------------------------------------------------------
 
 const registerFields = z.object({
-  role: z.enum(["PARENT", "EDUCATOR"], { error: "Choisissez un type de compte." }),
+  role: z.enum(["PARENT", "EDUCATOR", "TUTOR"], { error: "Choisissez un type de compte." }),
   npi: npiSchema,
   firstName: required(80, "Le prénom"),
   lastName: required(80, "Le nom"),
@@ -262,7 +262,7 @@ export const lessonSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
-// Tutorats
+// Accompagnements
 // ---------------------------------------------------------------------------
 
 export const tutoringSchema = z.object({
@@ -390,4 +390,92 @@ export const contactSchema = z.object({
   profile: z.enum(["PARENT", "EDUCATOR", "OTHER"], { error: "Choisissez votre profil." }),
   subject: required(150, "L'objet"),
   message: text(3000).min(10, "Votre message est trop court."),
+});
+
+// ---------------------------------------------------------------------------
+// Suivi (tuteurs)
+// ---------------------------------------------------------------------------
+
+export const tutorDossierSchema = z.object({
+  birthDate: dateString("Date de naissance").refine((d) => d < new Date(), "La date doit être passée."),
+  zone: required(2000, "La zone d'intervention").refine((v) => parseZones(v).every((z) => ZONES.includes(z)), "Choisissez vos zones dans la liste proposée."),
+  occupation: required(120, "Votre situation actuelle"),
+  bio: optional(1000),
+  guarantorName: required(120, "Le nom du garant"),
+  guarantorPhone: phoneSchema,
+  payoutPhone: phoneSchema,
+  payoutOperator: z.enum(Object.keys(MOBILE_OPERATORS) as [keyof typeof MOBILE_OPERATORS], { error: "Choisissez l'opérateur de votre numéro." }),
+});
+
+export const followUpTaskSchema = z.object({
+  kind: z.enum(Object.keys(TASK_KINDS) as [keyof typeof TASK_KINDS]),
+  title: required(120, "L'intitulé de l'action"),
+  instructions: optional(500),
+  childIds: z.array(z.string().min(1)).min(1, "Choisissez au moins un enfant pour chaque action."),
+  days: z.array(weekday).min(1, "Choisissez au moins un jour pour chaque action."),
+  intervalWeeks: z.union([z.literal(1), z.literal(2), z.literal(4)]),
+  dueHour: z.number().int().min(6).max(23),
+  photoRequired: z.boolean(),
+});
+
+const jsonField = (v: unknown) => {
+  if (typeof v !== "string") return v;
+  try {
+    return JSON.parse(v);
+  } catch {
+    return undefined;
+  }
+};
+
+export const followUpRequestSchema = z.object({
+  tutorId: z.string().min(1),
+  childIds: z.array(z.string().min(1)).min(1, "Choisissez au moins un enfant."),
+  startDate: dateString("Date de début"),
+  message: optional(1000),
+  tasks: z.preprocess(jsonField, z.array(followUpTaskSchema).min(1, "Ajoutez au moins une action.").max(12, "12 actions maximum.")),
+});
+
+export const followUpTasksSchema = z.object({
+  followUpId: z.string().min(1),
+  tasks: z.preprocess(jsonField, z.array(followUpTaskSchema.extend({ id: z.string().optional() })).min(1, "Gardez au moins une action.").max(12, "12 actions maximum.")),
+});
+
+export const followUpReasonSchema = z.object({
+  followUpId: z.string().min(1),
+  reason: required(500, "Le motif"),
+});
+
+const gradeSchema = z
+  .object({
+    subject: required(80, "La matière"),
+    score: z.number().min(0, "Note invalide."),
+    outOf: z.number().int().min(1).max(100),
+  })
+  .refine((g) => g.score <= g.outOf, { error: "La note dépasse le barème.", path: ["score"] });
+
+export const occurrenceReportSchema = z.object({
+  occurrenceId: z.string().min(1),
+  result: z.enum(Object.keys(OCCURRENCE_RESULTS) as [keyof typeof OCCURRENCE_RESULTS], { error: "Indiquez si l'action a été faite." }),
+  comment: optional(1000),
+  grades: z.preprocess(jsonField, z.array(gradeSchema).max(20).optional()),
+});
+
+export const occurrenceFeedbackSchema = z.object({
+  occurrenceId: z.string().min(1),
+  comment: optional(500),
+});
+
+export const tutorDecisionSchema = z.object({
+  tutorId: z.string().min(1),
+});
+
+export const rejectTutorSchema = z.object({
+  tutorId: z.string().min(1),
+  reason: required(1000, "Le motif du rejet"),
+});
+
+export const followUpSettingsSchema = z.object({
+  followUpFirstChild: z.coerce.number().int().min(500, "Montant trop faible.").max(500000, "Montant trop élevé."),
+  followUpExtraChild: z.coerce.number().int().min(0).max(500000, "Montant trop élevé."),
+  followUpCommissionPercent: z.coerce.number().int().min(0).max(50, "50 % maximum."),
 });

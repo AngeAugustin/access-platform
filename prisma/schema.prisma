@@ -17,6 +17,8 @@ datasource db {
 enum Role {
   PARENT
   EDUCATOR
+  // Tuteur seul. Un éducateur peut aussi être tuteur : c'est la fiche TutorProfile qui ouvre l'espace tuteur.
+  TUTOR
   ADMIN
 }
 
@@ -66,6 +68,9 @@ model User {
   auditLogs            AuditLog[]
   executedPayouts      Payout[]             @relation("PayoutExecutor")
   validatedProfiles    EducatorProfile[]    @relation("ProfileValidator")
+  tutorProfile         TutorProfile?
+  validatedTutors      TutorProfile[]       @relation("TutorValidator")
+  parentFollowUps      FollowUp[]           @relation("ParentFollowUps")
 }
 
 // Session côté serveur : le cookie ne contient qu'un jeton opaque, la base n'en stocke que l'empreinte SHA-256.
@@ -274,6 +279,8 @@ model Child {
 
   subjectLevels SubjectLevel[]
   tutorings     Tutoring[]
+  followUps     FollowUpChild[]
+  occurrences   TaskOccurrence[]
 
   @@index([parentId])
 }
@@ -619,4 +626,172 @@ model PushSubscription {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Suivi : un tuteur vérifie, pour le compte du parent, que les enfants font ce qui est attendu
+// (leçons apprises, devoirs faits, notes consultées à l'école) et lui en fait un retour.
+// ---------------------------------------------------------------------------
+
+model TutorProfile {
+  id              String          @id @default(cuid())
+  userId          String          @unique
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  birthDate       DateTime?
+  zone            String?
+  occupation      String?
+  bio             String?
+  guarantorName   String?
+  guarantorPhone  String?
+  payoutPhone     String?
+  payoutOperator  MobileOperator?
+  status          ProfileStatus   @default(INCOMPLETE)
+  rejectionReason String?
+  submittedAt     DateTime?
+  validatedAt     DateTime?
+  validatedById   String?
+  validatedBy     User?           @relation("TutorValidator", fields: [validatedById], references: [id], onDelete: SetNull)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  documents TutorDocument[]
+  followUps FollowUp[]
+
+  @@index([status])
+}
+
+model TutorDocument {
+  id           String       @id @default(cuid())
+  tutorId      String
+  tutor        TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  type         DocumentType
+  storageKey   String       @unique
+  mimeType     String
+  size         Int
+  originalName String
+  uploadedAt   DateTime     @default(now())
+
+  @@unique([tutorId, type])
+}
+
+// REQUESTED : en attente de la réponse du tuteur ; DECLINED : refusé par le tuteur ; CANCELLED : demande retirée par le parent ;
+// ENDED : suivi arrêté (par le parent, le tuteur ou Access).
+enum FollowUpStatus {
+  REQUESTED
+  ACTIVE
+  DECLINED
+  CANCELLED
+  ENDED
+}
+
+model FollowUp {
+  id                String         @id @default(cuid())
+  reference         String         @unique
+  parentId          String
+  parent            User           @relation("ParentFollowUps", fields: [parentId], references: [id], onDelete: Restrict)
+  tutorId           String
+  tutor             TutorProfile   @relation(fields: [tutorId], references: [id], onDelete: Restrict)
+  status            FollowUpStatus @default(REQUESTED)
+  startDate         DateTime       @db.Date
+  message           String?
+  // Instantané de la grille au moment de la demande : un changement de tarif ne touche pas un suivi existant.
+  monthlyPrice      Int
+  commissionPercent Int
+  respondedAt       DateTime?
+  declineReason     String?
+  endedAt           DateTime?
+  endReason         String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  children FollowUpChild[]
+  tasks    FollowUpTask[]
+
+  @@index([parentId])
+  @@index([tutorId])
+  @@index([status])
+}
+
+model FollowUpChild {
+  followUpId String
+  followUp   FollowUp @relation(fields: [followUpId], references: [id], onDelete: Cascade)
+  childId    String
+  child      Child    @relation(fields: [childId], references: [id], onDelete: Restrict)
+
+  @@id([followUpId, childId])
+}
+
+enum FollowUpTaskKind {
+  LESSONS
+  HOMEWORK
+  SCHOOL_VISIT
+  OTHER
+}
+
+// Action définie par le parent. Elle revient les jours choisis, une semaine sur `intervalWeeks`,
+// et doit être faite avant `dueHour` (heure du Bénin) ; chaque passage donne une TaskOccurrence par enfant.
+model FollowUpTask {
+  id            String           @id @default(cuid())
+  followUpId    String
+  followUp      FollowUp         @relation(fields: [followUpId], references: [id], onDelete: Cascade)
+  kind          FollowUpTaskKind
+  title         String
+  instructions  String?
+  childIds      String[]
+  days          Weekday[]
+  intervalWeeks Int              @default(1)
+  dueHour       Int              @default(21)
+  photoRequired Boolean          @default(false)
+  // Une action retirée est désactivée, pas supprimée : ses retours passés restent consultables.
+  active        Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+
+  occurrences TaskOccurrence[]
+
+  @@index([followUpId])
+}
+
+// PENDING : à faire ; MISSED : aucun retour dans le délai accordé (posé par la tâche quotidienne).
+enum OccurrenceStatus {
+  PENDING
+  DONE
+  PARTIAL
+  NOT_DONE
+  MISSED
+}
+
+model TaskOccurrence {
+  id            String           @id @default(cuid())
+  taskId        String
+  task          FollowUpTask     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  childId       String
+  child         Child            @relation(fields: [childId], references: [id], onDelete: Cascade)
+  date          DateTime         @db.Date
+  dueAt         DateTime
+  status        OccurrenceStatus @default(PENDING)
+  comment       String?
+  // Notes relevées lors d'une visite à l'école : [{ subject, score, outOf }].
+  grades        Json?
+  reportedAt    DateTime?
+  parentSeenAt  DateTime?
+  parentComment String?
+  createdAt     DateTime         @default(now())
+
+  photos OccurrencePhoto[]
+
+  @@unique([taskId, childId, date])
+  @@index([status, dueAt])
+  @@index([childId, date])
+}
+
+model OccurrencePhoto {
+  id           String         @id @default(cuid())
+  occurrenceId String
+  occurrence   TaskOccurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  storageKey   String         @unique
+  mimeType     String
+  size         Int
+  createdAt    DateTime       @default(now())
+
+  @@index([occurrenceId])
 }

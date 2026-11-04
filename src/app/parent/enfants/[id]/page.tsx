@@ -18,7 +18,7 @@ export const metadata = { title: "Fiche enfant" };
 const TABS = [
   { key: "apercu", label: "Aperçu" },
   { key: "matieres", label: "Matières" },
-  { key: "suivi", label: "Suivi" },
+  { key: "suivi", label: "Cours" },
   { key: "infos", label: "Infos" },
 ] as const;
 
@@ -174,7 +174,7 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
           {tab === "suivi" && (
             <div>
               {child.tutorings.length === 0 ? (
-                <p className="text-sm text-slate-500">Aucun tutorat pour l&apos;instant.</p>
+                <p className="text-sm text-slate-500">Aucun accompagnement pour l&apos;instant.</p>
               ) : (
                 <ul className="space-y-2.5">
                   {child.tutorings.map((t) => (
@@ -195,13 +195,13 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
               items={[
                 ["Sexe", child.sex === "F" ? "Fille" : "Garçon"],
                 ["Date de naissance", formatDate(child.birthDate)],
-                ["NPI", child.npi ?? "—"],
+                ["NPI", child.npi ?? "-"],
                 ["Classe actuelle", child.currentClass],
-                ["École actuelle", child.currentSchool ?? "—"],
-                ["Classe précédente", child.previousClass ?? "—"],
-                ["École précédente", child.previousSchool ?? "—"],
-                ["Matières préférées", child.favoriteSubjects ?? "—"],
-                ["Centres d'intérêt", child.interests ?? "—"],
+                ["École actuelle", child.currentSchool ?? "-"],
+                ["Classe précédente", child.previousClass ?? "-"],
+                ["École précédente", child.previousSchool ?? "-"],
+                ["Matières préférées", child.favoriteSubjects ?? "-"],
+                ["Centres d'intérêt", child.interests ?? "-"],
               ]}
             />
           )}
@@ -269,7 +269,7 @@ function TutoringRow({ tutoring: t }: { tutoring: TutoringItem }) {
     >
       <Avatar name={fullName(t.educator.user)} documentId={t.educator.documents[0]?.id} size={44} />
       <span className="min-w-0 flex-1">
-        {live && <span className="block text-xs font-semibold text-brand-200">Tutorat en cours</span>}
+        {live && <span className="block text-xs font-semibold text-brand-200">Accompagnement en cours</span>}
         <span className="block truncate text-15px font-semibold">{fullName(t.educator.user)}</span>
         <span className={cx("mt-0.5 block truncate text-13px", live ? "text-brand-200" : "text-slate-500")}>
           {live ? t.slotsLabel : `${formatDate(t.startDate)} → ${formatDate(t.endDate)}`}

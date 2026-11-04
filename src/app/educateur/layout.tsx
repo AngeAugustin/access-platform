@@ -1,3 +1,4 @@
+import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { AppShell } from "@/components/shell/app-shell";
 import type { NavItem } from "@/components/shell/nav-links";
@@ -13,8 +14,10 @@ const items: NavItem[] = [
 
 export default async function EducatorLayout({ children }: { children: React.ReactNode }) {
   const user = await requireRole("EDUCATOR");
+  // Un éducateur peut aussi être tuteur : lien vers son espace tuteur, ou vers son activation.
+  const tutor = await db.tutorProfile.findUnique({ where: { userId: user.id }, select: { id: true } });
   return (
-    <AppShell user={user} items={items} root="/educateur">
+    <AppShell user={user} items={items} root="/educateur" switchTo={{ href: "/tuteur", label: tutor ? "Espace tuteur" : "Devenir tuteur" }}>
       {children}
     </AppShell>
   );

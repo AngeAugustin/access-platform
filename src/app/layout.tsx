@@ -5,7 +5,7 @@ import { ServiceWorkerRegistrar } from "@/components/pwa/service-worker";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Access — Tutorat scolaire", template: "%s · Access" },
+  title: { default: "Access · Accompagnement scolaire", template: "%s · Access" },
   description: "Trouvez un éducateur vérifié pour votre enfant, suivez chaque séance et payez en Mobile Money.",
   applicationName: "Access",
   appleWebApp: { capable: true, title: "Access", statusBarStyle: "default" },

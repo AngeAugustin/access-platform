@@ -123,8 +123,8 @@ export async function stopTutoring(tutoringId: string, actor: { id: string; role
     where: { id: tutoringId, ...(actor.role === "PARENT" ? { parentId: actor.id } : {}) },
     include: { installments: { include: { payout: true } }, child: true, educator: { select: { userId: true } } },
   });
-  if (!tutoring) throw new BusinessError("Tutorat introuvable.");
-  if (tutoring.status !== "ACTIVE") throw new BusinessError("Ce tutorat est déjà terminé.");
+  if (!tutoring) throw new BusinessError("Accompagnement introuvable.");
+  if (tutoring.status !== "ACTIVE") throw new BusinessError("Cet accompagnement est déjà terminé.");
 
   const stopDate = new Date();
   const changes = planStop(tutoring, tutoring.installments, tutoring.startDate, stopDate);
@@ -167,9 +167,9 @@ export async function stopTutoring(tutoringId: string, actor: { id: string; role
   await notify({
     userId: tutoring.educator.userId,
     type: "tutoring.stopped",
-    title: "Tutorat arrêté",
+    title: "Accompagnement arrêté",
     body:
-      `Le tutorat de ${child} a été arrêté. Motif : ${reason}` +
+      `L'accompagnement de ${child} a été arrêté. Motif : ${reason}` +
       (payoutReduction > 0 ? ` Votre reversement est ramené aux semaines effectuées (${formatFcfa(payoutReduction)} en moins).` : ""),
     link: `/educateur/eleves/${tutoring.id}`,
     email: true,
@@ -179,9 +179,9 @@ export async function stopTutoring(tutoringId: string, actor: { id: string; role
     await notify({
       userId: tutoring.parentId,
       type: "tutoring.stopped",
-      title: "Tutorat arrêté",
+      title: "Accompagnement arrêté",
       body:
-        (actor.role === "ADMIN" ? `Access a arrêté le tutorat de ${child}. Motif : ${reason}` : `Le tutorat de ${child} est arrêté.`) +
+        (actor.role === "ADMIN" ? `Access a arrêté l'accompagnement de ${child}. Motif : ${reason}` : `L'accompagnement de ${child} est arrêté.`) +
         (refundTotal > 0 ? ` ${formatFcfa(refundTotal)} déjà payés correspondent à des semaines non effectuées : Access vous les rembourse.` : ""),
       link: `/parent/tutorats/${tutoring.id}`,
       email: true,
@@ -191,14 +191,14 @@ export async function stopTutoring(tutoringId: string, actor: { id: string; role
     await notifyAdmins({
       type: "refund.review",
       title: "Remboursement à faire",
-      body: `Le tutorat ${tutoring.reference} a été arrêté après paiement : ${formatFcfa(refundTotal)} sont à rembourser au parent.`,
+      body: `L'accompagnement ${tutoring.reference} a été arrêté après paiement : ${formatFcfa(refundTotal)} sont à rembourser au parent.`,
       link: `/admin/paiements?onglet=anomalies`,
     });
   }
   return changes;
 }
 
-// Tâche quotidienne : clôture des tutorats arrivés à échéance et libération des créneaux.
+// Tâche quotidienne : clôture des accompagnements arrivés à échéance et libération des créneaux.
 export async function completeEndedTutorings(now = new Date()) {
   const ended = await db.tutoring.findMany({
     where: { status: "ACTIVE", endDate: { lte: now } },
@@ -212,8 +212,8 @@ export async function completeEndedTutorings(now = new Date()) {
     await notify({
       userId: t.parentId,
       type: "tutoring.completed",
-      title: "Tutorat terminé",
-      body: `Le tutorat de ${fullName(t.child)} est terminé. Donnez votre avis sur l'éducateur.`,
+      title: "Accompagnement terminé",
+      body: `L'accompagnement de ${fullName(t.child)} est terminé. Donnez votre avis sur l'éducateur.`,
       link: `/parent/tutorats/${t.id}`,
     });
   }

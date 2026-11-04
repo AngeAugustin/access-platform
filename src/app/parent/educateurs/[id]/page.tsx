@@ -126,7 +126,7 @@ export default async function EducatorPage({ params, searchParams }: { params: P
             )}
           </Card>
 
-          <Card title="Disponibilités" description="Choisissez vos créneaux dans la demande de tutorat." action={<AvailabilityLegend />}>
+          <Card title="Disponibilités" description="Choisissez vos créneaux dans la demande d'accompagnement." action={<AvailabilityLegend />}>
             <AvailabilityGrid availabilities={educator.availabilities} booked={educator.bookedSlots} />
           </Card>
 
@@ -186,7 +186,7 @@ export default async function EducatorPage({ params, searchParams }: { params: P
         <aside id="demande" className="min-w-0 scroll-mt-24 lg:sticky lg:top-24">
           <section className="rounded-2xl border border-slate-200/80 bg-white shadow-soft">
             <header className="border-b border-slate-100 p-5 sm:px-6">
-              <h2 className="text-15px font-semibold tracking-tight text-ink">Demander un tutorat</h2>
+              <h2 className="text-15px font-semibold tracking-tight text-ink">Demander un accompagnement</h2>
               {fromPrice !== null ? (
                 <p className="mt-2 text-sm text-slate-500">
                   À partir de <span className="text-xl font-semibold tracking-tight text-ink tabular-nums">{formatFcfa(fromPrice)}</span> / {settings.weeksPerInstallment} semaines
@@ -223,7 +223,7 @@ export default async function EducatorPage({ params, searchParams }: { params: P
           </span>
         )}
         <a href="#demande" className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-accent-500 text-15px font-bold text-white transition hover:bg-accent-600">
-          Demander un tutorat
+          Demander un accompagnement
         </a>
       </div>
     </>

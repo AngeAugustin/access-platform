@@ -6,7 +6,7 @@ import { cx } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Confiance et sécurité",
-  description: "Comment Access vérifie les éducateurs, suit chaque séance, protège les paiements et vos données.",
+  description: "Comment Access vérifie les éducateurs et les tuteurs, suit chaque séance et chaque action, protège les paiements et vos données.",
 };
 
 const checks = [
@@ -33,7 +33,7 @@ export default function TrustPage() {
           </>
         }
       >
-        <p>Vérification de chaque éducateur, suivi de chaque séance, paiements protégés et données sécurisées : voici concrètement ce que fait Access.</p>
+        <p>Vérification de chaque éducateur et de chaque tuteur, suivi de chaque séance, paiements protégés et données sécurisées : voici concrètement ce que fait Access.</p>
       </PageHero>
 
       <Section eyebrow="1. Avant la première séance" title="Chaque dossier est vérifié par une personne.">
@@ -54,16 +54,31 @@ export default function TrustPage() {
             Un dossier incomplet ne peut pas être transmis. Une fois validé, l&apos;éducateur reçoit une note et un niveau attribués par l&apos;équipe Access, visibles des
             familles. Un dossier refusé l&apos;est avec un motif, et l&apos;éducateur n&apos;est pas proposé tant qu&apos;il n&apos;a pas été corrigé et revalidé.
           </p>
+          <p className="relative mt-4 max-w-3xl leading-relaxed text-brand-100">
+            Les tuteurs, qui assurent le suivi quotidien des leçons et des devoirs, passent le même contrôle : pièce d&apos;identité, casier judiciaire, photo et un garant. Ils ne
+            sont proposés aux familles qu&apos;une fois leur dossier validé.
+          </p>
         </div>
       </Section>
 
-      <Section eyebrow="2. Pendant le tutorat" title="Chaque séance laisse une trace.">
+      <Section eyebrow="2. Pendant l'accompagnement" title="Chaque séance laisse une trace.">
         <Steps
           items={[
             { title: "L'éducateur saisit la séance", text: "Date, créneau, travail réalisé et observations, juste après le cours." },
             { title: "Vous êtes notifié", text: "Le compte rendu arrive sur votre téléphone." },
             { title: "Vous confirmez ou contestez", text: "En un geste, avec un commentaire si besoin." },
             { title: "Access tranche", text: "Une séance contestée est examinée par l'équipe, qui la confirme ou la retire." },
+          ]}
+        />
+      </Section>
+
+      <Section eyebrow="Avec un tuteur" title="Chaque action a son retour.">
+        <Steps
+          items={[
+            { title: "Vous fixez les actions", text: "Leçons, devoirs, visites à l'école : les jours, l'heure limite, et si une photo est exigée." },
+            { title: "Le tuteur rend compte", text: "Après chaque action : fait, en partie ou non fait, avec commentaire, photos et notes relevées." },
+            { title: "Les oublis se voient", text: "Une action sans retour dans les délais vous est signalée et entre dans la fiabilité du tuteur." },
+            { title: "Access veille", text: "L'équipe suit la fiabilité de chaque tuteur et peut arrêter un suivi ou suspendre un compte." },
           ]}
         />
       </Section>
@@ -82,7 +97,8 @@ export default function TrustPage() {
             tentatives automatisées.
           </FeatureCard>
           <FeatureCard icon={ShieldCheck} title="Pièces confidentielles">
-            Les pièces justificatives des éducateurs ne sont visibles que d&apos;eux-mêmes et de l&apos;équipe Access. Les familles ne voient que le profil et la photo.
+            Les pièces justificatives des éducateurs et des tuteurs ne sont visibles que d&apos;eux-mêmes et de l&apos;équipe Access. Les familles ne voient que le profil et la
+            photo. Les photos d&apos;un retour de suivi ne sont visibles que de la famille, du tuteur et de l&apos;équipe.
           </FeatureCard>
           <FeatureCard icon={ClipboardCheck} title="Actions journalisées" tone="brand">
             Validations, paiements, connexions et gestion des comptes sont enregistrés dans un journal d&apos;audit.

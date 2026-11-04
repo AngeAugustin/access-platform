@@ -84,7 +84,7 @@ export async function saveDossierStepAction(_: ActionState, formData: FormData):
     if (empty.length > 0) return { ok: false, errors: { classLevels: [`Choisissez au moins une classe en ${empty.join(", ")}, ou décochez ce cycle.`] } };
     if (data.subjects.some((s) => !subjects.includes(s))) return { ok: false, errors: { subjects: ["Matière invalide."] } };
 
-    // Un créneau réservé par une famille ne peut pas être retiré tant que le tutorat est en cours.
+    // Un créneau réservé par une famille ne peut pas être retiré tant que l'accompagnement est en cours.
     const booked = await db.bookedSlot.findMany({ where: { educatorId: profile.id } });
     const removedBooked = booked.filter((b) => !slots.some((s) => s.day === b.day && s.slot === b.slot));
     if (removedBooked.length > 0) {
@@ -183,16 +183,16 @@ export async function addLessonAction(_: ActionState, formData: FormData): Promi
     where: { id: d.tutoringId, educator: { userId: user.id } },
     include: { child: true },
   });
-  if (!tutoring) return { ok: false, message: "Tutorat introuvable." };
+  if (!tutoring) return { ok: false, message: "Accompagnement introuvable." };
 
   const start = new Date(tutoring.startDate.toISOString().slice(0, 10));
   const end = tutoring.stoppedAt ?? tutoring.endDate;
   if (d.date < start || d.date > end) {
     return { ok: false, errors: { date: [`La date doit être comprise entre le ${formatDate(start)} et le ${formatDate(end)}.`] } };
   }
-  // Saisie tolérée 7 jours après la fin du tutorat, pour les séances oubliées.
+  // Saisie tolérée 7 jours après la fin de l'accompagnement, pour les séances oubliées.
   if (tutoring.status !== "ACTIVE" && Date.now() - end.getTime() > 7 * 864e5) {
-    return { ok: false, message: "Ce tutorat est clôturé depuis plus de 7 jours." };
+    return { ok: false, message: "Cet accompagnement est clôturé depuis plus de 7 jours." };
   }
   try {
     await db.lesson.create({

@@ -25,3 +25,7 @@ export function numericCode(length: number): string {
 export function provisionalPassword(): string {
   return `${randomCode(4, "ABCDEFGHJKMNPQRSTUVWXYZ")}-${randomCode(4, "23456789")}-${randomCode(4)}`;
 }
+
+export function followUpReference(): string {
+  return `SUI-${randomCode(8)}`;
+}

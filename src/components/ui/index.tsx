@@ -346,7 +346,7 @@ export function DefinitionList({ items }: { items: [string, ReactNode][] }) {
       {items.map(([k, v]) => (
         <div key={k} className="min-w-0">
           <dt className="text-13px text-slate-500">{k}</dt>
-          <dd className="mt-0.5 text-15px font-medium break-words text-ink">{v ?? "—"}</dd>
+          <dd className="mt-0.5 text-15px font-medium break-words text-ink">{v ?? "-"}</dd>
         </div>
       ))}
     </dl>

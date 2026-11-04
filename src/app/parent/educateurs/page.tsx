@@ -9,7 +9,7 @@ import { fullName } from "@/lib/format";
 import { listCatalog } from "@/server/queries/educators";
 import { EmptyState, buttonClass, cx } from "@/components/ui";
 import { Avatar } from "@/components/avatar";
-import { ScreenTitle, panel } from "@/components/parent/kit";
+import { CatalogSwitch, ScreenTitle, panel } from "@/components/parent/kit";
 import { CycleClassSelect } from "@/components/parent/cycle-class-select";
 
 export const metadata = { title: "Trouver un éducateur" };
@@ -33,13 +33,14 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <ScreenTitle eyebrow={kid ? `Pour ${kid.firstName} · ${kid.currentClass}` : "Chaque dossier est vérifié par Access"} title="Trouver un éducateur" />
+      <CatalogSwitch current="educateurs" query={suffix} />
 
       <form method="get" className="mb-4 space-y-3">
         {filters.enfant && <input type="hidden" name="enfant" value={filters.enfant} />}
         <label className="flex h-13 items-center gap-2.5 rounded-[18px] bg-white px-4 text-slate-500 shadow-[0_0_0_1px_rgb(15_23_42/0.08)] focus-within:shadow-[0_0_0_2px_var(--color-brand-400)]">
           <Search className="size-5 shrink-0" strokeWidth={1.9} aria-hidden />
           <span className="sr-only">Quartier ou ville</span>
-          <input name="zone" defaultValue={filters.zone ?? ""} placeholder="Quartier ou ville : Fidjrossè, Calavi…" className="min-w-0 flex-1 bg-transparent text-15px text-ink outline-none placeholder:text-slate-400" />
+          <input name="zone" defaultValue={filters.zone ?? ""} placeholder="Quartier ou commune : Fidjrossè, Parakou…" className="min-w-0 flex-1 bg-transparent text-15px text-ink outline-none placeholder:text-slate-400" />
           <button className="text-sm font-semibold text-brand-700">Chercher</button>
         </label>
         <details className="group" open={panelFilters > 0 || undefined}>

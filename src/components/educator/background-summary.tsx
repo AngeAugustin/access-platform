@@ -17,7 +17,7 @@ const join = (...parts: (string | number | null | undefined)[]) => parts.filter(
 // Parcours détaillé d'un éducateur ; à défaut, le texte libre des anciens dossiers.
 export function BackgroundSummary({ e }: { e: BackgroundFields }) {
   if (!e.degreeLevel) {
-    return <p className="text-sm leading-relaxed whitespace-pre-line text-slate-700">{e.background || "—"}</p>;
+    return <p className="text-sm leading-relaxed whitespace-pre-line text-slate-700">{e.background || "-"}</p>;
   }
   const experiences = readExperiences(e.experiences);
   return (

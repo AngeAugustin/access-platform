@@ -29,7 +29,7 @@ import { Button } from "@/components/ui";
 
 const tariffConfirmation = (classLevel: string) => ({
   title: `Mettre à jour le tarif de ${classLevel} ?`,
-  description: "Le nouveau tarif s'applique aux tutorats créés ensuite ; les tutorats en cours gardent le leur.",
+  description: "Le nouveau tarif s'applique aux accompagnements créés ensuite ; les accompagnements en cours gardent le leur.",
   confirmLabel: "Mettre à jour",
 });
 
@@ -382,12 +382,12 @@ export function ResolveAnomalyForm({ paymentId, installmentId }: { paymentId?: s
 
 export function AdminStopTutoringForm({ tutoringId }: { tutoringId: string }) {
   return (
-    <ActionForm toast action={adminStopTutoringAction} className="space-y-3" confirm={{ title: "Arrêter définitivement ce tutorat ?", description: "Cette action ne peut pas être annulée.", confirmLabel: "Arrêter le tutorat", tone: "danger" }}
+    <ActionForm toast action={adminStopTutoringAction} className="space-y-3" confirm={{ title: "Arrêter définitivement cet accompagnement ?", description: "Cette action ne peut pas être annulée.", confirmLabel: "Arrêter l'accompagnement", tone: "danger" }}
     >
       <FormMessage />
       <input type="hidden" name="tutoringId" value={tutoringId} />
       <TextArea label="Motif" name="reason" rows={2} required />
-      <SubmitButton variant="danger-soft">Arrêter le tutorat</SubmitButton>
+      <SubmitButton variant="danger-soft">Arrêter l&apos;accompagnement</SubmitButton>
     </ActionForm>
   );
 }
@@ -400,7 +400,7 @@ export function DisputeForm({ lessonId }: { lessonId: string }) {
       className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3"
       confirm={(data) =>
         data.get("decision") === "REMOVE"
-          ? { title: "Retirer cette séance ?", description: "Elle sera supprimée du tutorat ; le parent et l'éducateur seront prévenus.", confirmLabel: "Retirer la séance", tone: "danger" }
+          ? { title: "Retirer cette séance ?", description: "Elle sera supprimée de l'accompagnement ; le parent et l'éducateur seront prévenus.", confirmLabel: "Retirer la séance", tone: "danger" }
           : { title: "Valider cette séance ?", description: "La séance sera comptée comme effectuée ; le parent et l'éducateur seront prévenus.", confirmLabel: "Valider la séance" }
       }
     >

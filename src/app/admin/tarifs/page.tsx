@@ -7,6 +7,8 @@ import { amountForWeeks } from "@/lib/billing";
 import { getSettings } from "@/server/services/settings";
 import { Card, PageHeader } from "@/components/ui";
 import { SettingsForm, TariffForm, TariffRow } from "@/components/admin/forms";
+import { FollowUpSettingsForm } from "@/components/admin/tutor-forms";
+import { followUpPrice } from "@/lib/follow-up";
 
 export const metadata = { title: "Tarifs et paramètres" };
 
@@ -18,7 +20,7 @@ export default async function TariffsPage() {
 
   return (
     <>
-      <PageHeader title="Tarifs et paramètres" subtitle="Une modification s'applique aux nouveaux tutorats ; les contrats en cours gardent leur tarif." />
+      <PageHeader title="Tarifs et paramètres" subtitle="Une modification s'applique aux nouveaux accompagnements ; les contrats en cours gardent leur tarif." />
       <Card title="Paramètres de facturation" className="mb-5">
         {admin.isSuperAdmin ? (
           <SettingsForm defaults={settings} />
@@ -28,9 +30,18 @@ export default async function TariffsPage() {
           </p>
         )}
       </Card>
+      <Card title="Forfait du suivi" description={`Payé chaque mois par le parent : ${formatFcfa(followUpPrice(1, settings))} pour un enfant, ${formatFcfa(followUpPrice(2, settings))} pour deux. Un changement s'applique aux nouvelles demandes.`} className="mb-5">
+        {admin.isSuperAdmin ? (
+          <FollowUpSettingsForm defaults={settings} />
+        ) : (
+          <p className="text-sm text-slate-700">
+            {formatFcfa(settings.followUpFirstChild)} pour le premier enfant, {formatFcfa(settings.followUpExtraChild)} par enfant en plus, commission {settings.followUpCommissionPercent} %. Seul un super-administrateur peut les modifier.
+          </p>
+        )}
+      </Card>
       {missing.length > 0 && (
         <Card title="Ajouter un tarif" className="mb-5">
-          <p className="mb-3 text-sm text-amber-800">Sans tarif, aucun tutorat ne peut être créé pour : {missing.join(", ")}.</p>
+          <p className="mb-3 text-sm text-amber-800">Sans tarif, aucun accompagnement ne peut être créé pour : {missing.join(", ")}.</p>
           <TariffForm classes={missing} />
         </Card>
       )}

@@ -134,7 +134,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
         amount: refund,
         detail: (
           <>
-            Tutorat arrêté : semaines payées mais non effectuées.
+            Accompagnement arrêté : semaines payées mais non effectuées.
             {overpaid && (
               <span className="block text-rose-700">
                 Le reversement à l&apos;éducateur est {i.payout?.status === "DONE" ? "déjà parti" : "en cours"} au montant plein ({formatFcfa(i.payout?.netAmount ?? 0)}) : la part non due est à récupérer.
@@ -227,7 +227,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                   <Td className="whitespace-nowrap">{formatFcfa(p.grossAmount)}</Td>
                   <Td className="whitespace-nowrap">{formatFcfa(p.commissionAmount)}</Td>
                   <Td className="whitespace-nowrap font-semibold">{formatFcfa(p.netAmount)}</Td>
-                  <Td>{payoutAccount(p.educator) ?? "—"}</Td>
+                  <Td>{payoutAccount(p.educator) ?? "-"}</Td>
                   <Td>
                     <PayoutBadge status={p.status} />
                     {p.failureReason && <span className="block text-xs text-rose-700">{p.failureReason}</span>}
@@ -279,7 +279,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
       {tab === "anomalies" && (
         <Card
           title="Anomalies de paiement"
-          description="Montants incohérents, doubles paiements et remboursements dus après un arrêt de tutorat, paiements ou reversements restés sans réponse de FedaPay plus de 24 h, échecs d'initialisation des 7 derniers jours."
+          description="Montants incohérents, doubles paiements et remboursements dus après un arrêt d'accompagnement, paiements ou reversements restés sans réponse de FedaPay plus de 24 h, échecs d'initialisation des 7 derniers jours."
         >
           {anomalies.length === 0 ? (
             <EmptyState icon={CircleCheck} title="Aucune anomalie" />
@@ -293,7 +293,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                   <Td>{a.subject}</Td>
                   <Td className="whitespace-nowrap">{formatFcfa(a.amount)}</Td>
                   <Td className="max-w-xs text-sm">{a.detail}</Td>
-                  <Td>{a.action ?? "—"}</Td>
+                  <Td>{a.action ?? "-"}</Td>
                 </tr>
               ))}
             </Table>
@@ -336,7 +336,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                   <Td className="whitespace-nowrap">{formatFcfa(p.netAmount)}</Td>
                   <Td>{p.method === "FEDAPAY" ? "FedaPay" : "Manuel"}</Td>
                   <Td className="font-mono text-xs">{p.providerReference}</Td>
-                  <Td>{p.executedBy ? fullName(p.executedBy) : "—"}</Td>
+                  <Td>{p.executedBy ? fullName(p.executedBy) : "-"}</Td>
                 </tr>
               ))}
             </Table>

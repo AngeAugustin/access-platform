@@ -86,12 +86,14 @@ type Person = {
   lastName: string;
   role: keyof typeof ROLE_LABELS;
   educatorProfile: { id: string } | null;
+  tutorProfile?: { id: string } | null;
 };
 
 function personHref(p: Person) {
   if (p.role === "PARENT") return `/admin/parents/${p.id}`;
   if (p.role === "EDUCATOR" && p.educatorProfile)
     return `/admin/educateurs/${p.educatorProfile.id}`;
+  if (p.role === "TUTOR" && p.tutorProfile) return `/admin/tuteurs/${p.tutorProfile.id}`;
   return "/admin/administrateurs";
 }
 
@@ -120,6 +122,7 @@ async function resolveTargets(
     lastName: true,
     role: true,
     educatorProfile: { select: { id: true } },
+    tutorProfile: { select: { id: true } },
   } as const;
   const [
     users,
@@ -294,6 +297,7 @@ export default async function AuditPage({
             lastName: true,
             role: true,
             educatorProfile: { select: { id: true } },
+            tutorProfile: { select: { id: true } },
           },
         },
       },

@@ -75,7 +75,7 @@ ${body}
 <p style="margin:24px 0 0;padding-top:20px;border-top:1px solid #e2e8f0;${FONT};font-size:14px;line-height:1.6;color:${TEXT}">L'équipe Access Tutorat</p>
 </td></tr>
 <tr><td align="center" style="padding:24px 16px 0;${FONT};font-size:12px;line-height:1.6;color:${MUTED}">
-Access Tutorat · Tutorat scolaire à domicile · Cotonou et Abomey-Calavi<br />
+Access Tutorat · Accompagnement scolaire à domicile · Partout au Bénin<br />
 Message automatique, merci de ne pas y répondre.${url ? ` <a href="${escapeHtml(url)}" target="_blank" style="color:${MUTED};text-decoration:underline">Ouvrir Access</a>` : ""}
 </td></tr>
 </table>
@@ -95,7 +95,7 @@ export async function sendMail(to: string, subject: string, title: string, bodyH
       console.error("[mail] RESEND_API_KEY manquante : e-mail non envoyé à", to);
       return;
     }
-    console.info(`[mail:dev] À ${to} — ${subject}\n${bodyHtml.replace(/<[^>]+>/g, " ")}`);
+    console.info(`[mail:dev] À ${to} : ${subject}\n${bodyHtml.replace(/<[^>]+>/g, " ")}`);
     return;
   }
   const res = await fetch("https://api.resend.com/emails", {

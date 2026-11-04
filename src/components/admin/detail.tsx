@@ -114,7 +114,7 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 type TutoringSummary = { id: string; status: keyof typeof TUTORING_STATUS; startDate: Date; endDate: Date; durationWeeks: number };
 
-// Avancement d'un tutorat : semaine en cours pour un tutorat actif, période sinon.
+// Avancement d'un accompagnement : semaine en cours pour un accompagnement actif, période sinon.
 function Progress({ t, now }: { t: TutoringSummary; now: Date }) {
   if (t.status !== "ACTIVE") {
     return (

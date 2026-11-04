@@ -6,7 +6,7 @@ import { getCurriculum } from "@/server/queries/curriculum";
 
 export const metadata: Metadata = {
   title: "Matières et classes",
-  description: "Répétiteurs à domicile à Cotonou et Abomey-Calavi : toutes les classes et matières couvertes par Access.",
+  description: "Répétiteurs à domicile partout au Bénin : toutes les classes et matières couvertes par Access.",
 };
 
 export default async function SubjectsPage() {
@@ -25,7 +25,7 @@ export default async function SubjectsPage() {
           </Link>
         }
       >
-        <p>Access couvre les classes et matières ci-dessous, à domicile, à Cotonou et Abomey-Calavi.</p>
+        <p>Access couvre les classes et matières ci-dessous, à domicile, partout au Bénin.</p>
       </PageHero>
 
       <Section eyebrow="Matières" title={`${subjects.length} matière${subjects.length > 1 ? "s" : ""}.`}>

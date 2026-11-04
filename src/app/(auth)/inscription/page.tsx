@@ -8,7 +8,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   const { role } = await searchParams;
   return (
     <>
-      <RegisterForm defaultRole={role === "EDUCATOR" ? "EDUCATOR" : "PARENT"} />
+      <RegisterForm defaultRole={role === "EDUCATOR" || role === "TUTOR" ? role : "PARENT"} />
       {/* Sur grand écran, le lien est dans la barre du haut. */}
       <p className="mt-8 text-center text-sm text-slate-500 lg:hidden">
         Déjà inscrit ?{" "}

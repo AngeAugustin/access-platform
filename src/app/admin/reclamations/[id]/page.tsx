@@ -24,7 +24,7 @@ export default async function AdminComplaintPage({ params }: { params: Promise<{
               ["Contact", `${c.author.email} · ${c.author.phone}`],
               ["Déposée le", formatDateTime(c.createdAt)],
               ["Statut", COMPLAINT_STATUS[c.status]],
-              ["Traitée par", c.handledBy ? `${fullName(c.handledBy)} le ${formatDateTime(c.handledAt)}` : "—"],
+              ["Traitée par", c.handledBy ? `${fullName(c.handledBy)} le ${formatDateTime(c.handledAt)}` : "-"],
             ]}
           />
           <p className="mt-5 rounded-xl bg-slate-50 p-4 text-15px leading-relaxed whitespace-pre-line text-slate-700">{c.details}</p>

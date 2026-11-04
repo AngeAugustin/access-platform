@@ -41,3 +41,10 @@ export async function requireSuperAdmin(): Promise<CurrentUser> {
   if (!user.isSuperAdmin) forbidden();
   return user;
 }
+
+// Espace tuteur : les tuteurs, et les éducateurs qui ont activé leur profil tuteur (ou viennent l'activer).
+export async function requireTutorSpace(): Promise<CurrentUser> {
+  const user = await requireUser();
+  if (user.role !== "TUTOR" && user.role !== "EDUCATOR") forbidden();
+  return user;
+}

@@ -25,7 +25,7 @@ export function addWeeks(date: Date, weeks: number): Date {
   return new Date(date.getTime() + weeks * WEEK_MS);
 }
 
-// Découpe un tutorat en échéances de `weeksPerInstallment` semaines (la dernière peut être plus courte).
+// Découpe un accompagnement en échéances de `weeksPerInstallment` semaines (la dernière peut être plus courte).
 // Chaque échéance est exigible à la fin de la période qu'elle couvre. Le nombre d'échéances n'est pas plafonné.
 export function planInstallments(
   rate: Rate,
@@ -57,7 +57,7 @@ export function planInstallments(
   return plan;
 }
 
-// Nombre de semaines entamées entre le début du tutorat et la date d'arrêt.
+// Nombre de semaines entamées entre le début de l'accompagnement et la date d'arrêt.
 export function weeksElapsed(startDate: Date, stopDate: Date): number {
   const diff = stopDate.getTime() - startDate.getTime();
   if (diff <= 0) return 0;

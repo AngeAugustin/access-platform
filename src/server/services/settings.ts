@@ -16,7 +16,7 @@ export async function getSettings(): Promise<Settings> {
   return settings;
 }
 
-export async function saveSettings(settings: Settings) {
+export async function saveSettings(settings: Partial<Settings>) {
   await db.$transaction(
     Object.entries(settings).map(([key, value]) =>
       db.setting.upsert({ where: { key }, create: { key, value: String(value) }, update: { value: String(value) } }),

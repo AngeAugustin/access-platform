@@ -7,7 +7,7 @@ import { publicReviews } from "@/server/queries/public";
 
 export const metadata: Metadata = {
   title: "Avis des familles",
-  description: "Les avis laissés par les parents à la fin de leurs tutorats Access.",
+  description: "Les avis laissés par les parents à la fin de leurs accompagnements Access.",
 };
 
 export default async function ReviewsPage() {
@@ -17,7 +17,7 @@ export default async function ReviewsPage() {
     <>
       <PageHero eyebrow="Avis des familles" title="Ce que disent les parents.">
         <p>
-          Ces avis sont laissés par les parents à la fin d&apos;un tutorat, depuis leur espace. Seul un parent ayant suivi un tutorat peut en publier un. Nous ne les
+          Ces avis sont laissés par les parents à la fin d&apos;un accompagnement, depuis leur espace. Seul un parent ayant suivi un accompagnement peut en publier un. Nous ne les
           modifions pas ; seul un avis abusif peut être retiré.
         </p>
         {count > 0 && average !== null && (
@@ -41,7 +41,7 @@ export default async function ReviewsPage() {
                 <Stars value={r.rating} />
                 <blockquote className="mt-4 text-[17px] leading-relaxed text-slate-700">« {r.comment} »</blockquote>
                 <p className="mt-5 text-sm text-slate-500">
-                  <span className="font-semibold text-ink">{r.parent.firstName}</span>, parent d&apos;un élève de {r.tutoring.classLevel} · tutorat avec{" "}
+                  <span className="font-semibold text-ink">{r.parent.firstName}</span>, parent d&apos;un élève de {r.tutoring.classLevel} · accompagnement avec{" "}
                   {r.educator.user.firstName} · {formatDate(r.createdAt)}
                 </p>
               </li>
@@ -49,7 +49,7 @@ export default async function ReviewsPage() {
           </ul>
         ) : (
           <EmptyNote>
-            Les premiers avis arriveront à la fin des premiers tutorats. En attendant, découvrez <Link href="/confiance" className="font-semibold text-brand-700">comment nous
+            Les premiers avis arriveront à la fin des premiers accompagnements. En attendant, découvrez <Link href="/confiance" className="font-semibold text-brand-700">comment nous
             vérifions nos éducateurs</Link>.
           </EmptyNote>
         )}

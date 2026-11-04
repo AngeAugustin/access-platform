@@ -51,7 +51,7 @@ export default async function ChildrenPage() {
                       c.tutorings.length > 0 ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500",
                     )}
                   >
-                    {c.tutorings.length > 0 ? `${c.tutorings.length} tutorat${c.tutorings.length > 1 ? "s" : ""} en cours` : "Aucun suivi"}
+                    {c.tutorings.length > 0 ? `${c.tutorings.length} accompagnement${c.tutorings.length > 1 ? "s" : ""} en cours` : "Aucun suivi"}
                   </span>
                 </span>
                 <ChevronRight className="size-5 text-slate-300 transition group-hover:text-brand-500" aria-hidden />

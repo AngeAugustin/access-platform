@@ -14,7 +14,7 @@ import { EducatorReviewForm, LessonReview, StopTutoringForm } from "@/components
 import { PayButton } from "@/components/parent/pay-button";
 import { ProgressRing, ScreenTitle, SectionHeading, darkPanel, display, panel } from "@/components/parent/kit";
 
-export const metadata = { title: "Suivi du tutorat" };
+export const metadata = { title: "Suivi de l'accompagnement" };
 
 const dayMonth = new Intl.DateTimeFormat("fr-FR", { timeZone: "Africa/Porto-Novo", day: "2-digit", month: "short" });
 const weekday = new Intl.DateTimeFormat("fr-FR", { timeZone: "Africa/Porto-Novo", weekday: "long" });
@@ -47,10 +47,10 @@ export default async function TutoringPage({ params, searchParams }: { params: P
 
   return (
     <>
-      <ScreenTitle back="/parent/tutorats" eyebrow={`Tutorat de ${t.child.firstName} · réf. ${t.reference}`} title={educatorName} action={<TutoringBadge status={t.status} />} />
+      <ScreenTitle back="/parent/tutorats" eyebrow={`Accompagnement de ${t.child.firstName} · réf. ${t.reference}`} title={educatorName} action={<TutoringBadge status={t.status} />} />
       {nouveau && (
         <div className="mb-5">
-          <Notice tone="green" icon={CircleCheck} title="Tutorat créé">
+          <Notice tone="green" icon={CircleCheck} title="Accompagnement créé">
             {educatorName} a été prévenu. Vos échéances sont listées ci-dessous.
           </Notice>
         </div>

@@ -1,5 +1,5 @@
-// Zones d'intervention proposées aux éducateurs : quartiers de Cotonou, d'Abomey-Calavi et des communes voisines.
-// Chaque zone s'écrit « Quartier (Commune) » : la recherche des familles par quartier ou par commune la retrouve.
+// Zones d'intervention proposées aux éducateurs et aux tuteurs : les 77 communes du Bénin, plus le détail des quartiers
+// des grandes communes du Sud. Chaque quartier s'écrit « Quartier (Commune) » : la recherche des familles par quartier ou par commune la retrouve.
 // Pas de virgule dans les libellés : la sélection est enregistrée sous la forme « A, B, C ».
 const QUARTERS: Record<string, string[]> = {
   Cotonou: [
@@ -96,9 +96,29 @@ const QUARTERS: Record<string, string[]> = {
   Ouidah: ["Ouidah Centre", "Pahou", "Savi"],
 };
 
-// Toute une commune d'abord (pour qui se déplace partout), puis les quartiers.
+// Les 77 communes, par département.
+export const COMMUNES_BY_DEPARTMENT: Record<string, string[]> = {
+  Alibori: ["Banikoara", "Gogounou", "Kandi", "Karimama", "Malanville", "Ségbana"],
+  Atacora: ["Boukoumbé", "Cobly", "Kérou", "Kouandé", "Matéri", "Natitingou", "Péhunco", "Tanguiéta", "Toucountouna"],
+  Atlantique: ["Abomey-Calavi", "Allada", "Kpomassè", "Ouidah", "Sô-Ava", "Toffo", "Tori-Bossito", "Zè"],
+  Borgou: ["Bembèrèkè", "Kalalé", "N'Dali", "Nikki", "Parakou", "Pèrèrè", "Sinendé", "Tchaourou"],
+  Collines: ["Bantè", "Dassa-Zoumè", "Glazoué", "Ouèssè", "Savalou", "Savè"],
+  Couffo: ["Aplahoué", "Djakotomey", "Dogbo", "Klouékanmè", "Lalo", "Toviklin"],
+  Donga: ["Bassila", "Copargo", "Djougou", "Ouaké"],
+  Littoral: ["Cotonou"],
+  Mono: ["Athiémé", "Bopa", "Comè", "Grand-Popo", "Houéyogbé", "Lokossa"],
+  Ouémé: ["Adjarra", "Adjohoun", "Aguégués", "Akpro-Missérété", "Avrankou", "Bonou", "Dangbo", "Porto-Novo", "Sèmè-Podji"],
+  Plateau: ["Adja-Ouèrè", "Ifangni", "Kétou", "Pobè", "Sakété"],
+  Zou: ["Abomey", "Agbangnizoun", "Bohicon", "Covè", "Djidja", "Ouinhi", "Za-Kpota", "Zagnanado", "Zogbodomey"],
+};
+
+export const COMMUNES: string[] = Object.values(COMMUNES_BY_DEPARTMENT)
+  .flat()
+  .sort((a, b) => a.localeCompare(b, "fr"));
+
+// Toute une commune d'abord (pour qui se déplace partout), puis les quartiers détaillés.
 export const ZONES: string[] = [
-  ...Object.keys(QUARTERS).map((commune) => `${commune} (toute la commune)`),
+  ...COMMUNES.map((commune) => `${commune} (toute la commune)`),
   ...Object.entries(QUARTERS).flatMap(([commune, quarters]) => quarters.map((q) => `${q} (${commune})`)),
 ];
 

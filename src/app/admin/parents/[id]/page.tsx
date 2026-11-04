@@ -58,7 +58,7 @@ export default async function AdminParentPage({ params }: { params: Promise<{ id
         metrics={
           <>
             <Metric label="Enfants inscrits">{p.children.length}</Metric>
-            <Metric label="Tutorats">
+            <Metric label="Accompagnements">
               {activeTutorings} <span className="text-sm font-normal text-slate-400">en cours · {p.parentTutorings.length} au total</span>
             </Metric>
             <Metric label="Total payé">
@@ -89,7 +89,7 @@ export default async function AdminParentPage({ params }: { params: Promise<{ id
                       c._count.tutorings > 0 ? (
                         <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Suivi en cours</span>
                       ) : (
-                        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">Sans tutorat</span>
+                        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">Sans accompagnement</span>
                       )
                     }
                   />
@@ -98,10 +98,10 @@ export default async function AdminParentPage({ params }: { params: Promise<{ id
             )}
           </Card>
 
-          <Card title="Tutorats">
+          <Card title="Accompagnements">
             {p.parentTutorings.length === 0 ? (
-              <Empty icon={BookOpenCheck} title="Aucun tutorat">
-                Les tutorats demandés par ce parent apparaîtront ici.
+              <Empty icon={BookOpenCheck} title="Aucun accompagnement">
+                Les accompagnements demandés par ce parent apparaîtront ici.
               </Empty>
             ) : (
               <ul className="-my-2 divide-y divide-slate-100">
@@ -151,7 +151,7 @@ export default async function AdminParentPage({ params }: { params: Promise<{ id
                   <ul className="mt-0.5 text-13px">
                     {overdue.map((i) => (
                       <li key={i.id}>
-                        Échéance {i.index} du tutorat de {i.tutoring.child.firstName}, due le {formatDate(i.dueDate)}
+                        Échéance {i.index} de l&apos;accompagnement de {i.tutoring.child.firstName}, due le {formatDate(i.dueDate)}
                       </li>
                     ))}
                   </ul>
@@ -193,7 +193,7 @@ export default async function AdminParentPage({ params }: { params: Promise<{ id
               <Info icon={IdCard} label="NPI" value={<span className="tabular-nums">{p.npi}</span>} />
               <Info icon={Mail} label="E-mail" value={p.email} />
               <Info icon={Phone} label="Téléphone" value={p.phone} />
-              <Info icon={House} label="Adresse" value={[p.address, p.city].filter(Boolean).join(", ") || "—"} />
+              <Info icon={House} label="Adresse" value={[p.address, p.city].filter(Boolean).join(", ") || "-"} />
               <Info icon={FileCheck} label="Conditions" value={p.acceptedTermsAt ? `Acceptées le ${formatDate(p.acceptedTermsAt)}` : "Non acceptées"} />
             </dl>
           </Card>

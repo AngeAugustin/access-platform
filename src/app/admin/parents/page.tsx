@@ -31,7 +31,7 @@ export default async function AdminParentsPage({ searchParams }: { searchParams:
       {parents.length === 0 ? (
         <EmptyState icon={Users} title="Aucun parent" />
       ) : (
-        <Table head={["Nom", "Contact", "Ville", "Enfants", "Tutorats", "Inscrit le", "Compte"]}>
+        <Table head={["Nom", "Contact", "Ville", "Enfants", "Accompagnements", "Inscrit le", "Compte"]}>
           {parents.map((p) => (
             <tr key={p.id} className="hover:bg-slate-50">
               <Td>
@@ -44,7 +44,7 @@ export default async function AdminParentsPage({ searchParams }: { searchParams:
                 {p.email}
                 <span className="block text-xs text-slate-500">{p.phone}</span>
               </Td>
-              <Td>{p.city ?? "—"}</Td>
+              <Td>{p.city ?? "-"}</Td>
               <Td>{p._count.children}</Td>
               <Td>{p._count.parentTutorings}</Td>
               <Td className="whitespace-nowrap">{formatDate(p.createdAt)}</Td>

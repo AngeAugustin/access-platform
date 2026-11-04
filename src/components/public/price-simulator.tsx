@@ -6,7 +6,7 @@ import { formatFcfa } from "@/lib/format";
 
 export type SimulatorTariff = Rate & { classLevel: string };
 
-// Estimation du coût d'un tutorat : mêmes règles que la création réelle (src/lib/billing.ts).
+// Estimation du coût d'un accompagnement : mêmes règles que la création réelle (src/lib/billing.ts).
 export function PriceSimulator({ tariffs, weeksPerInstallment, maxWeeks }: { tariffs: SimulatorTariff[]; weeksPerInstallment: number; maxWeeks: number }) {
   const id = useId();
   const [classLevel, setClassLevel] = useState(tariffs[0]?.classLevel ?? "");
@@ -41,7 +41,7 @@ export function PriceSimulator({ tariffs, weeksPerInstallment, maxWeeks }: { tar
         <div>
           <div className="flex items-baseline justify-between gap-3">
             <label htmlFor={`${id}-semaines`} className="text-sm font-medium text-brand-200">
-              Durée du tutorat
+              Durée de l&apos;accompagnement
             </label>
             <span className="font-display text-xl font-bold">
               {weeks} semaine{weeks > 1 ? "s" : ""}
@@ -78,7 +78,7 @@ export function PriceSimulator({ tariffs, weeksPerInstallment, maxWeeks }: { tar
         </dl>
         <p className="text-13px leading-relaxed text-brand-200">
           Une échéance couvre {weeksPerInstallment} semaines{weeks % weeksPerInstallment ? " ; la dernière, plus courte, coûte moins" : ""}. Rien n&apos;est payé à
-          l&apos;avance pour tout le tutorat.
+          l&apos;avance pour tout l&apos;accompagnement.
         </p>
       </div>
     </div>

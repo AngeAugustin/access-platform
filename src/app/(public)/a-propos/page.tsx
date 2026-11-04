@@ -6,7 +6,7 @@ import { CtaBand, FeatureCard, PageHero, pillLight, Section } from "@/components
 
 export const metadata: Metadata = {
   title: "À propos",
-  description: "Access rend le tutorat scolaire à domicile plus sûr et plus simple pour les familles et les éducateurs du Bénin.",
+  description: "Access rend l'accompagnement scolaire à domicile plus sûr et plus simple pour les familles et les éducateurs du Bénin.",
 };
 
 export default function AboutPage() {
@@ -39,7 +39,7 @@ export default function AboutPage() {
             Tout se fait depuis le téléphone, et le paiement en Mobile Money.
           </FeatureCard>
           <FeatureCard icon={MapPin} title="La proximité" tone="brand">
-            Un service pensé pour Cotonou et Abomey-Calavi : les classes, les matières et les moyens de paiement d&apos;ici.
+            Un service pensé pour le Bénin : les classes, les matières et les moyens de paiement d&apos;ici, dans toutes les communes du pays.
           </FeatureCard>
         </div>
       </Section>

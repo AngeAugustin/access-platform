@@ -9,7 +9,7 @@ import { Logo } from "@/components/brand";
 import { cx } from "@/components/ui";
 import type { FeaturedReview } from "@/server/queries/public";
 
-type Role = "PARENT" | "EDUCATOR";
+type Role = "PARENT" | "EDUCATOR" | "TUTOR";
 type Variant = "login" | Role;
 
 // Rôle choisi dans l'assistant d'inscription : le panneau de marque suit le choix en direct.
@@ -30,13 +30,15 @@ function useVariant(): Variant {
   const params = useSearchParams();
   const { role } = use(RoleContext);
   if (pathname !== "/inscription") return "login";
-  return role ?? (params.get("role") === "EDUCATOR" ? "EDUCATOR" : "PARENT");
+  const fromUrl = params.get("role");
+  return role ?? (fromUrl === "EDUCATOR" || fromUrl === "TUTOR" ? fromUrl : "PARENT");
 }
 
 const headlines: Record<Variant, { title: string; highlight: string }> = {
   login: { title: "Le suivi scolaire de vos enfants,", highlight: "en toute confiance." },
   PARENT: { title: "Le bon éducateur,", highlight: "près de chez vous." },
   EDUCATOR: { title: "Des élèves près de chez vous.", highlight: "Des paiements garantis." },
+  TUTOR: { title: "Accompagnez des familles", highlight: "au quotidien." },
 };
 
 // Étoile du logo, en contour.
@@ -59,7 +61,7 @@ function LoginContent({ review }: { review: FeaturedReview | null }) {
     return (
       <>
         <p className="font-display text-[40px] leading-[1.05] font-bold tracking-tight">Chaque séance compte.</p>
-        <p className="mt-4 max-w-sm text-brand-100">Le tutorat scolaire à domicile, suivi de près, à Cotonou et Abomey-Calavi.</p>
+        <p className="mt-4 max-w-sm text-brand-100">L&apos;accompagnement scolaire à domicile, suivi de près, partout au Bénin.</p>
         <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-brand-100">
           {[
             { icon: ShieldCheck, text: "Éducateurs vérifiés" },
@@ -166,7 +168,7 @@ export function AuthAside({ review }: { review: FeaturedReview | null }) {
         )}
       </div>
       <p className="relative mt-10 flex items-center gap-2 text-xs text-brand-200">
-        <MapPin className="size-3.5" aria-hidden /> Cotonou · Abomey-Calavi
+        <MapPin className="size-3.5" aria-hidden /> Partout au Bénin
       </p>
     </aside>
   );

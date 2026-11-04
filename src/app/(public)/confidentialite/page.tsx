@@ -45,7 +45,7 @@ const sections: LegalSection[] = [
             photo.
           </li>
           <li>
-            <strong>Suivi du tutorat</strong> : tutorats, comptes rendus de séance, confirmations et contestations, avis laissés par les parents, réclamations et leurs
+            <strong>Suivi de l&apos;accompagnement</strong> : accompagnements, comptes rendus de séance, confirmations et contestations, avis laissés par les parents, réclamations et leurs
             réponses, notifications.
           </li>
           <li>
@@ -95,7 +95,7 @@ const sections: LegalSection[] = [
     content: (
       <p>
         Les informations sur un enfant sont saisies par son parent ou représentant légal, qui garantit être autorisé à le faire. Elles ne sont visibles que de ce parent, de
-        l&apos;équipe Access et de l&apos;éducateur chargé d&apos;un tutorat de cet enfant, pendant la durée de ce tutorat. L&apos;enfant ne dispose pas de compte.
+        l&apos;équipe Access et de l&apos;éducateur chargé d&apos;un accompagnement de cet enfant, pendant la durée de cet accompagnement. L&apos;enfant ne dispose pas de compte.
       </p>
     ),
   },
@@ -114,7 +114,7 @@ const sections: LegalSection[] = [
             avis) et les avis publiés par les parents, signés de leur seul prénom.
           </li>
           <li>
-            <strong>Un éducateur</strong> voit les informations utiles au tutorat qu&apos;il assure : l&apos;enfant, sa classe et son niveau, et les coordonnées du parent.
+            <strong>Un éducateur</strong> voit les informations utiles à l&apos;accompagnement qu&apos;il assure : l&apos;enfant, sa classe et son niveau, et les coordonnées du parent.
           </li>
           <li>
             <strong>L&apos;équipe Access</strong> accède aux données nécessaires à ses missions : validation des dossiers, suivi, paiements, réclamations, sécurité.

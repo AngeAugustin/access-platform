@@ -8,7 +8,7 @@ import { Card, DefinitionList, PageHeader, Table, Td } from "@/components/ui";
 import { InstallmentBadge, LessonBadge, PayoutBadge, TutoringBadge } from "@/components/status";
 import { AdminStopTutoringForm, DisputeForm } from "@/components/admin/forms";
 
-export const metadata = { title: "Tutorat" };
+export const metadata = { title: "Accompagnement" };
 
 export default async function AdminTutoringPage({ params }: { params: Promise<{ id: string }> }) {
   await requireRole("ADMIN");
@@ -48,12 +48,12 @@ export default async function AdminTutoringPage({ params }: { params: Promise<{ 
               ["Période", `${formatDate(t.startDate)} → ${formatDate(t.endDate)} (${t.durationWeeks} sem.)`],
               ["Créneaux", t.slotsLabel],
               ["Tarif", `${formatFcfa(t.hourlyRate)}/h · ${t.sessionsPerWeek} × ${t.hoursPerSession} h`],
-              ["Arrêt", t.stoppedAt ? `${formatDate(t.stoppedAt)} — ${t.stopReason}` : "—"],
-              ["Avis du parent", t.review ? `${t.review.rating}/5 ${t.review.comment ?? ""}` : "—"],
+              ["Arrêt", t.stoppedAt ? `${formatDate(t.stoppedAt)} · ${t.stopReason}` : "-"],
+              ["Avis du parent", t.review ? `${t.review.rating}/5 ${t.review.comment ?? ""}` : "-"],
             ]}
           />
         </Card>
-        <Card title="Action">{t.status === "ACTIVE" ? <AdminStopTutoringForm tutoringId={t.id} /> : <p className="text-sm text-slate-600">Tutorat clôturé.</p>}</Card>
+        <Card title="Action">{t.status === "ACTIVE" ? <AdminStopTutoringForm tutoringId={t.id} /> : <p className="text-sm text-slate-600">Accompagnement clôturé.</p>}</Card>
         <Card title="Échéances et reversements" className="lg:col-span-2">
           <Table bare head={["#", "Semaines", "Montant", "Date limite", "Statut", "Payé le", "Reversement"]}>
             {t.installments.map((i) => (
@@ -67,7 +67,7 @@ export default async function AdminTutoringPage({ params }: { params: Promise<{ 
                   {i.payments.length > 1 && <span className="ml-1 text-xs font-semibold text-rose-700">{i.payments.length} paiements !</span>}
                 </Td>
                 <Td className="whitespace-nowrap">{formatDate(i.paidAt)}</Td>
-                <Td>{i.payout ? <PayoutBadge status={i.payout.status} /> : "—"}</Td>
+                <Td>{i.payout ? <PayoutBadge status={i.payout.status} /> : "-"}</Td>
               </tr>
             ))}
           </Table>

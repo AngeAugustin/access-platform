@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, Check, ChevronRight, ClipboardCheck, CreditCard, GraduationCap, UserRoundPlus } from "lucide-react";
+import { CalendarDays, Check, ChevronRight, ClipboardCheck, CreditCard, GraduationCap, ListChecks, UserRoundPlus } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/dal";
 import { TIME_SLOTS } from "@/lib/constants";
@@ -75,6 +75,13 @@ export default async function ParentHome({ searchParams }: { searchParams: Promi
       include: { tutoring: { include: { child: { select: { firstName: true } } } } },
       orderBy: { dueDate: "asc" },
     }),
+  ]);
+
+  // Suivi au quotidien : suivis ouverts et retours du tuteur pas encore vus.
+  const followScope = { parentId: user.id, status: { in: ["ACTIVE" as const, "REQUESTED" as const] }, ...(kid && { children: { some: { childId: kid.id } } }) };
+  const [followUps, unseenReports] = await Promise.all([
+    db.followUp.findMany({ where: followScope, include: { tutor: { include: { user: { select: { firstName: true, lastName: true } } } }, children: { include: { child: { select: { firstName: true } } } } }, orderBy: { createdAt: "asc" } }),
+    db.taskOccurrence.findMany({ where: { reportedAt: { not: null }, parentSeenAt: null, task: { followUp: { parentId: user.id } }, ...(kid && { childId: kid.id }) }, select: { task: { select: { followUpId: true } } } }),
   ]);
 
   const now = new Date();
@@ -171,7 +178,7 @@ export default async function ParentHome({ searchParams }: { searchParams: Promi
           </SectionHeading>
           {tutorings.length === 0 ? (
             <div className={cx(panel, "p-5 text-sm text-slate-500")}>
-              Aucun tutorat en cours.{" "}
+              Aucun accompagnement en cours.{" "}
               <Link href={kid ? `/parent/educateurs?classe=${encodeURIComponent(kid.currentClass)}&enfant=${kid.id}` : "/parent/educateurs"} className="font-semibold text-brand-700">
                 Trouver un éducateur
               </Link>
@@ -200,7 +207,46 @@ export default async function ParentHome({ searchParams }: { searchParams: Promi
             </ul>
           )}
         </section>
+
+        <section aria-labelledby="t-suivi">
+          <SectionHeading id="t-suivi" action={followUps.length > 0 && <Link href="/parent/suivi" className="text-sm font-semibold text-brand-700 hover:text-brand-800">Tout voir</Link>}>
+            Suivi au quotidien
+          </SectionHeading>
+          {followUps.length === 0 ? (
+            <Link href={kid ? `/parent/tuteurs?enfant=${kid.id}` : "/parent/tuteurs"} className={cx(panel, "flex items-center gap-3 p-4 transition hover:shadow-lift")}>
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-accent-50 text-accent-700" aria-hidden>
+                <ListChecks className="size-5" strokeWidth={1.9} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-15px font-semibold text-ink">Un tuteur pour les leçons et les devoirs</span>
+                <span className="mt-0.5 block text-13px text-slate-500">Vous fixez les actions, il les fait et vous fait un retour.</span>
+                <span className="mt-1 block text-13px font-semibold text-brand-700">Trouver un tuteur</span>
+              </span>
+            </Link>
+          ) : (
+            <ul className="space-y-2.5">
+              {followUps.map((f) => (
+                <li key={f.id}>
+                  <Link href={`/parent/suivi/${f.id}`} className={cx(panel, "flex items-center gap-3 px-3.5 py-3 transition hover:shadow-lift")}>
+                    <Avatar name={fullName(f.tutor.user)} size={44} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-15px font-semibold text-ink">
+                        {f.children.map((c) => c.child.firstName).join(", ")} · {f.tutor.user.firstName} {f.tutor.user.lastName.charAt(0)}.
+                      </span>
+                      <span className="mt-0.5 block truncate text-13px text-slate-500">{f.status === "REQUESTED" ? "En attente de la réponse du tuteur" : unseenLabel(unseenReports.filter((o) => o.task.followUpId === f.id).length)}</span>
+                    </span>
+                    <ChevronRight className="size-5 text-slate-400" aria-hidden />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </>
   );
+}
+
+function unseenLabel(n: number) {
+  return n > 0 ? `${n} retour${n > 1 ? "s" : ""} à lire` : "Tout est lu";
 }

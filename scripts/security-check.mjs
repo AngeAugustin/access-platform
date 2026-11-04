@@ -10,7 +10,7 @@ async function check(name, fn) {
     await fn();
     results.push(["OK", name]);
   } catch (err) {
-    results.push(["ÉCHEC", `${name} — ${err.message}`]);
+    results.push(["ÉCHEC", `${name} : ${err.message}`]);
   }
 }
 

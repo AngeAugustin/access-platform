@@ -124,6 +124,7 @@ export async function registerAction(_: ActionState, formData: FormData): Promis
         passwordHash: await hashPassword(d.password),
         acceptedTermsAt: new Date(),
         ...(d.role === "EDUCATOR" ? { educatorProfile: { create: {} } } : {}),
+        ...(d.role === "TUTOR" ? { tutorProfile: { create: {} } } : {}),
       },
     });
     userId = user.id;
@@ -160,8 +161,27 @@ ${emailButton(`${process.env.APP_URL ?? ""}/educateur/dossier`, "Compléter mon 
       ).catch(() => {});
     });
   }
+  if (d.role === "TUTOR") {
+    after(async () => {
+      await notifyAdmins({
+        type: "tutor.registered",
+        title: "Nouveau tuteur inscrit",
+        body: `${d.firstName} ${d.lastName} vient de créer son compte tuteur.`,
+        link: "/admin/tuteurs",
+      });
+      await sendMail(
+        d.email,
+        "Bienvenue chez Access : complétez votre dossier",
+        `Bienvenue, ${d.firstName} !`,
+        `<p>Votre compte tuteur est créé. Pour être proposé aux familles, complétez votre dossier : votre profil, un garant, votre numéro Mobile Money, puis votre pièce d'identité, votre casier judiciaire et une photo.</p>
+<p>L'équipe Access vérifie ensuite votre dossier et vous prévient par e-mail dès qu'il est validé.</p>
+${emailButton(`${process.env.APP_URL ?? ""}/tuteur/dossier`, "Compléter mon dossier")}`,
+        "Votre compte tuteur est créé : il reste à compléter votre dossier.",
+      ).catch(() => {});
+    });
+  }
   await createSession(userId);
-  redirect(d.role === "EDUCATOR" ? "/educateur/dossier" : "/parent");
+  redirect(d.role === "EDUCATOR" ? "/educateur/dossier" : d.role === "TUTOR" ? "/tuteur/dossier" : "/parent");
 }
 
 export async function loginAction(_: ActionState, formData: FormData): Promise<ActionState> {

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import {
   BookOpenCheck,
+  CalendarCheck,
   ChevronDown,
   CreditCard,
   FileClock,
@@ -13,12 +14,14 @@ import {
   House,
   LayoutDashboard,
   Library,
+  ListChecks,
   Search,
   MessageSquareWarning,
   NotebookPen,
   Settings2,
   ShieldCheck,
   Smile,
+  UserCheck,
   Users,
   Wallet,
   type LucideIcon,
@@ -43,6 +46,9 @@ const icons = {
   journal: FileClock,
   curriculum: Library,
   search: Search,
+  today: CalendarCheck,
+  followups: ListChecks,
+  tutors: UserCheck,
 } satisfies Record<string, LucideIcon>;
 
 export type NavIcon = keyof typeof icons;

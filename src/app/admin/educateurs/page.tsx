@@ -61,7 +61,7 @@ export default async function AdminEducatorsPage({ searchParams }: { searchParam
                   </span>
                 </Link>
               </Td>
-              <Td>{e.zone ?? "—"}</Td>
+              <Td>{e.zone ?? "-"}</Td>
               <Td>
                 <ProfileBadge status={e.status} />
               </Td>

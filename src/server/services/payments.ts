@@ -52,7 +52,7 @@ export async function startInstallmentPayment(installmentId: string, parentId: s
   try {
     tx = await createTransaction({
       amount: installment.amount,
-      description: `Access ${installment.reference} — ${fullName(installment.tutoring.child)}`,
+      description: `Access ${installment.reference} · ${fullName(installment.tutoring.child)}`,
       callbackUrl: `${appUrl}/parent/paiements/retour`,
       customer: { firstname: parent.firstName, lastname: parent.lastName, email: parent.email, phone: parent.phone },
       metadata: { paymentId: payment.id, installmentId: installment.id, reference: installment.reference },

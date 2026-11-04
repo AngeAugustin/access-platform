@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Access — Tutorat scolaire",
+    name: "Access · Accompagnement scolaire",
     short_name: "Access",
-    description: "Tutorat scolaire à domicile : éducateurs vérifiés, suivi des séances, paiement Mobile Money.",
+    description: "Accompagnement scolaire à domicile : éducateurs vérifiés, suivi des séances, paiement Mobile Money.",
     start_url: "/",
     scope: "/",
     display: "standalone",

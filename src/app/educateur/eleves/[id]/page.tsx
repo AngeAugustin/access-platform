@@ -12,7 +12,7 @@ import { LessonForm } from "@/components/educator/lesson-form";
 
 export const metadata = { title: "Suivi de l'élève" };
 
-// Les séances oubliées peuvent être saisies jusqu'à 7 jours après la fin du tutorat.
+// Les séances oubliées peuvent être saisies jusqu'à 7 jours après la fin de l'accompagnement.
 function withinGracePeriod(end: Date) {
   return Date.now() - end.getTime() <= 7 * 864e5;
 }
@@ -58,7 +58,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
             {canRecord ? (
               <LessonForm tutoringId={t.id} childName={fullName(t.child)} minDate={t.startDate.toISOString().slice(0, 10)} maxDate={end.toISOString().slice(0, 10)} />
             ) : (
-              <p className="text-sm text-slate-500">Ce tutorat est clôturé.</p>
+              <p className="text-sm text-slate-500">Cet accompagnement est clôturé.</p>
             )}
           </Card>
         </div>
@@ -67,11 +67,11 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
             <DefinitionList
               items={[
                 ["Période", `${formatDate(t.startDate)} → ${formatDate(t.endDate)}`],
-                ["École", t.child.currentSchool ?? "—"],
+                ["École", t.child.currentSchool ?? "-"],
                 ["Parent", fullName(t.parent)],
                 ["Téléphone", <a key="tel" href={`tel:${t.parent.phone}`} className="text-brand-700 hover:text-brand-800">{t.parent.phone}</a>],
-                ["Adresse", [t.parent.address, t.parent.city].filter(Boolean).join(", ") || "—"],
-                ["Centres d'intérêt", t.child.interests ?? "—"],
+                ["Adresse", [t.parent.address, t.parent.city].filter(Boolean).join(", ") || "-"],
+                ["Centres d'intérêt", t.child.interests ?? "-"],
               ]}
             />
             <div className="mt-6 border-t border-slate-100 pt-5">
