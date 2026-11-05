@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, ChevronLeft, GraduationCap, IdCard, ListChecks, Lock, Mail, MapPin, Users } from "lucide-react";
 import { registerAction } from "@/server/actions/auth";
@@ -57,14 +57,19 @@ function RegisterWizard({ defaultRole }: { defaultRole: Role }) {
   const [step, setStep] = useState<StepIndex>(0);
   const [role, setRole] = useState<Role>(defaultRole);
   const [localErrors, setLocalErrors] = useState<NonNullable<typeof state.errors>>({});
+  const [seenState, setSeenState] = useState(state);
   useSyncAuthRole(role);
 
-  useEffect(() => {
+  // La réponse du serveur peut signaler une erreur sur une étape précédente : on y revient
+  // au rendu, sans effet, pour que le message s'affiche sur le bon écran.
+  if (state !== seenState) {
+    setSeenState(state);
     const errors = state.errors;
-    if (!errors) return;
-    const idx = STEPS.findIndex((s) => s.fields.some((f) => errors[f]?.length));
-    if (idx === 0 || idx === 1 || idx === 2) setStep(idx);
-  }, [state]);
+    if (errors) {
+      const idx = STEPS.findIndex((s) => s.fields.some((f) => errors[f]?.length));
+      if (idx === 0 || idx === 1 || idx === 2) setStep(idx);
+    }
+  }
 
   function goTo(next: StepIndex) {
     setLocalErrors({});
