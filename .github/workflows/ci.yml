@@ -31,6 +31,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Node 22 apporte npm 10, qui refuse ce lockfile (produit par npm 11) dès `npm ci`.
+      - run: npm install -g npm@11.6.2
       - run: npm ci
       - name: Audit des dépendances de production
         run: npm run audit:deps
